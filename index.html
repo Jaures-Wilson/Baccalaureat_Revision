@@ -220,9 +220,40 @@ textarea:focus{border-color:var(--bleu2)}
 .toggle::after{content:'';position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:left .2s}
 .toggle.on{background:var(--vert)}
 .toggle.on::after{left:23px}
+
+/* ECRAN CHARGEMENT */
+.ecran-chargement{position:fixed;inset:0;background:#0f1117;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px}
+.charg-logo{font-size:22px;font-weight:900;color:var(--or);letter-spacing:1px}
+.charg-spinner{width:48px;height:48px;border:4px solid var(--carte3);border-top-color:var(--or);border-radius:50%;animation:spin .9s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.charg-txt{font-size:13px;color:var(--discret)}
+.firebase-erreur{display:none;position:fixed;inset:0;background:#0f1117;z-index:9999;padding:30px 20px;text-align:center}
+.firebase-erreur h2{color:var(--rouge);font-size:20px;margin-bottom:14px}
+.firebase-erreur p{color:var(--discret);font-size:14px;line-height:1.7;margin-bottom:12px}
+.firebase-erreur code{background:var(--carte2);padding:3px 8px;border-radius:6px;font-family:monospace;font-size:13px;color:var(--or)}
 </style>
+
+<!-- ═══ FIREBASE SDK (Realtime Database) ═══ -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
 </head>
 <body>
+
+
+<!-- ECRAN DE CHARGEMENT (masqué après connexion Firebase) -->
+<div class="ecran-chargement" id="ecran-chargement">
+  <div class="charg-logo">S.E. CORPORATION</div>
+  <div class="charg-spinner"></div>
+  <div class="charg-txt">Connexion a la base de donnees...</div>
+</div>
+
+<!-- ECRAN ERREUR FIREBASE -->
+<div class="firebase-erreur" id="firebase-erreur">
+  <h2>⚠️ Configuration Firebase requise</h2>
+  <p>La base de donnees n'est pas configuree. Ouvrez le fichier <code>index.html</code>, trouvez la section <code>FIREBASE_CONFIG</code> et remplacez les valeurs par celles de votre projet Firebase.</p>
+  <p>Consultez le guide PDF fourni pour les instructions detaillees.</p>
+</div>
 
 <!-- ══════════════════════════════════
      POPUP ANNONCE (ouvert au démarrage)
@@ -348,7 +379,9 @@ textarea:focus{border-color:var(--bleu2)}
         <option>Passable (10-12)</option>
         <option>Assez Bien (12-14)</option>
         <option>Bien (14-16)</option>
-        <option>Tres Bien (16+)</option>
+        <option>Tres Bien (16-18)</option>
+        <option>Excellent (18+)</option>
+        <option>Perfection (20/20)</option>
       </select>
     </div>
     <div class="erreur" id="err-champs">Remplissez tous les champs obligatoires (*)</div>
@@ -595,496 +628,553 @@ textarea:focus{border-color:var(--bleu2)}
 </div>
 
 <script>
-var MDP = 'sec2026admin';
-var SERIES = ['A','C','D','E','F','G','SES','STT','TI'];
-var resultats = JSON.parse(localStorage.getItem('sec4_res') || '[]');
-var qcmData = JSON.parse(localStorage.getItem('sec4_qcm') || '{}');
-var planning = JSON.parse(localStorage.getItem('sec4_plan') || '{"date":"","debut":"","fin":""}');
-var utilisateur = null, questions = [], reponses = {}, timerInt = null, tempsRestant = 0, ongletAdmin = 'ALL';
+/* ════════════════════════════════════════════════════════
+   !! CONFIGURATION FIREBASE — A REMPLIR OBLIGATOIREMENT !!
+   1. Allez sur https://console.firebase.google.com
+   2. Creez un projet > Realtime Database > Demarrer en mode test
+   3. Allez dans Parametres du projet > Vos applications > Web
+   4. Copiez les valeurs ci-dessous
+   ════════════════════════════════════════════════════════ */
+var FIREBASE_CONFIG = {
+  apiKey:            "AIzaSyA-FSVqlOwxL__d4nzbccDSXqGmDk-Ihxk",
+  authDomain:        "sec-qcm-bac.firebaseapp.com",
+  databaseURL:       "https://sec-qcm-bac-default-rtdb.firebaseio.com",
+  projectId:         "sec-qcm-bac",
+  storageBucket:     "sec-qcm-bac.firebasestorage.app",
+  messagingSenderId: "924529440886",
+  appId:             "1:924529440886:web:32c390dffb5b6ea218c757"
+};
 
-function aller(id) {
-  document.querySelectorAll('.page').forEach(function(p) { p.classList.remove('actif'); });
-  document.getElementById(id).classList.add('actif');
-  window.scrollTo(0, 0);
+/* ════ INIT FIREBASE ════ */
+var app, db;
+try {
+  app = firebase.initializeApp(FIREBASE_CONFIG);
+  db  = firebase.database();
+} catch(e) {
+  document.getElementById('ecran-chargement').style.display = 'none';
+  document.getElementById('firebase-erreur').style.display  = 'flex';
+  throw e;
 }
-function fermerModal(id) { document.getElementById(id).classList.remove('ouvert'); }
-function sauvegarder() { localStorage.setItem('sec4_res', JSON.stringify(resultats)); }
-function sauvegarderQCM() { localStorage.setItem('sec4_qcm', JSON.stringify(qcmData)); }
-function sauvegarderPlan() { localStorage.setItem('sec4_plan', JSON.stringify(planning)); }
 
-function getDevId() {
+/* ════ VARIABLES GLOBALES ════ */
+var MDP      = 'sec2026admin';
+var SERIES   = ['A','C','D','E','F','G','SES','STT','TI'];
+var resultats    = [];
+var qcmData      = {};
+var planning     = {date:'', debut:'', fin:''};
+var annonceData  = {active:false, titre:'', message:'', photo:''};
+var msgFin       = '';
+var utilisateur  = null, questions = [], reponses = {}, timerInt = null, tempsRestant = 0, ongletAdmin = 'ALL';
+
+/* ════ NAVIGATION ════ */
+function aller(id) {
+  document.querySelectorAll('.page').forEach(function(p){ p.classList.remove('actif'); });
+  document.getElementById(id).classList.add('actif');
+  window.scrollTo(0,0);
+}
+function fermerModal(id){ document.getElementById(id).classList.remove('ouvert'); }
+
+/* ════ FIREBASE : SAUVEGARDE ════ */
+function sauvegarder(entree)    { db.ref('sec4/resultats').push(entree); }
+function sauvegarderQCM()       { db.ref('sec4/qcm').set(qcmData); }
+function sauvegarderPlan()      { db.ref('sec4/planning').set(planning); }
+function sauvegarderAnnonceData(){ db.ref('sec4/annonce').set(annonceData); }
+function sauvegarderMsgFinDB(v) { db.ref('sec4/msgFin').set(v); }
+
+/* ════ DEVICE ID (reste en localStorage — propre a chaque eleve) ════ */
+function getDevId(){
   var d = localStorage.getItem('sec4_dev');
-  if (!d) { d = 'D' + Math.random().toString(36).substr(2, 8).toUpperCase(); localStorage.setItem('sec4_dev', d); }
+  if(!d){ d = 'D'+Math.random().toString(36).substr(2,8).toUpperCase(); localStorage.setItem('sec4_dev',d); }
   return d;
 }
+function genUID(s){ return s.substring(0,2).toUpperCase()+Math.floor(100+Math.random()*900); }
 
-function genUID(s) { return s.substring(0, 2).toUpperCase() + Math.floor(100 + Math.random() * 900); }
-
-function statutPlanning() {
-  if (!planning.date || !planning.debut || !planning.fin) return 'libre';
-  var maintenant = Date.now();
-  var debut = new Date(planning.date + 'T' + planning.debut).getTime();
-  var fin = new Date(planning.date + 'T' + planning.fin).getTime();
-  if (maintenant < debut) return 'avant';
-  if (maintenant > fin) return 'termine';
+/* ════ PLANNING ════ */
+function statutPlanning(){
+  if(!planning.date||!planning.debut||!planning.fin) return 'libre';
+  var now = Date.now();
+  var deb = new Date(planning.date+'T'+planning.debut).getTime();
+  var fin = new Date(planning.date+'T'+planning.fin).getTime();
+  if(now < deb) return 'avant';
+  if(now > fin) return 'termine';
   return 'ouvert';
 }
-
-function mettreAJourBanniere() {
+function mettreAJourBanniere(){
   var ban = document.getElementById('ban-statut');
   var tag = document.getElementById('tag-qcm');
   var desc = document.getElementById('desc-qcm');
   var st = statutPlanning();
   ban.innerHTML = '';
-  if (st === 'libre') {
-    tag.textContent = 'DISPONIBLE'; tag.style.background = 'var(--bleu)'; tag.style.color = '#fff';
-    desc.textContent = 'Commencez le devoir chronometré selon votre serie.';
-  } else if (st === 'ouvert') {
-    ban.innerHTML = '<div class="statut s-ouvert">Epreuve en cours — Fermeture a ' + planning.fin + '</div>';
-    tag.textContent = 'EN COURS'; tag.style.background = 'var(--vert)'; tag.style.color = '#000';
-    desc.textContent = 'QCM ouvert jusqu\'a ' + planning.fin + '. Commencez maintenant !';
-  } else if (st === 'avant') {
-    ban.innerHTML = '<div class="statut s-bientot">Epreuve prevue a ' + planning.debut + ' le ' + planning.date + '</div>';
-    tag.textContent = 'PAS ENCORE OUVERT'; tag.style.background = '#444'; tag.style.color = '#aaa';
-    desc.textContent = 'Le QCM ouvrira a ' + planning.debut + '. Revenez a cette heure.';
+  if(st==='libre'){
+    tag.textContent='DISPONIBLE'; tag.style.background='var(--bleu)'; tag.style.color='#fff';
+    desc.textContent='Commencez le devoir chronométré selon votre serie.';
+  } else if(st==='ouvert'){
+    ban.innerHTML='<div class="statut s-ouvert">Epreuve en cours — Fermeture a '+planning.fin+'</div>';
+    tag.textContent='EN COURS'; tag.style.background='var(--vert)'; tag.style.color='#000';
+    desc.textContent='QCM ouvert jusqu\'a '+planning.fin+'. Commencez maintenant !';
+  } else if(st==='avant'){
+    ban.innerHTML='<div class="statut s-bientot">Epreuve prevue a '+planning.debut+' le '+planning.date+'</div>';
+    tag.textContent='PAS ENCORE OUVERT'; tag.style.background='#444'; tag.style.color='#aaa';
+    desc.textContent='Le QCM ouvrira a '+planning.debut+'. Revenez a cette heure.';
   } else {
-    ban.innerHTML = '<div class="statut s-ferme">Epreuve terminee — QCM ferme</div>';
-    tag.textContent = 'FERME'; tag.style.background = 'var(--rouge)'; tag.style.color = '#fff';
-    desc.textContent = 'Cette epreuve est terminee. Consultez vos resultats.';
+    ban.innerHTML='<div class="statut s-ferme">Epreuve terminee — QCM ferme</div>';
+    tag.textContent='FERME'; tag.style.background='var(--rouge)'; tag.style.color='#fff';
+    desc.textContent='Cette epreuve est terminee. Consultez vos resultats.';
   }
 }
 setInterval(mettreAJourBanniere, 8000);
-mettreAJourBanniere();
 
-function demarrerFlux() {
+/* ════ FLUX ELEVE ════ */
+function demarrerFlux(){
   var st = statutPlanning();
-  if (st === 'avant') { alert('Le QCM n\'est pas encore ouvert.\nIl ouvrira le ' + planning.date + ' a ' + planning.debut + '.'); return; }
-  if (st === 'termine') { alert('Cette epreuve est terminee.'); return; }
+  if(st==='avant'){ alert('Le QCM n\'est pas encore ouvert.\nIl ouvrira le '+planning.date+' a '+planning.debut+'.'); return; }
+  if(st==='termine'){ alert('Cette epreuve est terminee.'); return; }
   var dev = getDevId();
-  if (localStorage.getItem('sec4_done_' + dev)) {
-    var r = resultats.find(function(x) { return x.deviceId === dev; });
-    if (r) alert('Vous avez deja soumis ce devoir.\nIdentifiant : ' + r.uid + '\nNote : ' + r.pts20.toFixed(1) + '/20');
+  if(localStorage.getItem('sec4_done_'+dev)){
+    var r = resultats.find(function(x){ return x.deviceId===dev; });
+    if(r) alert('Vous avez deja soumis ce devoir.\nIdentifiant : '+r.uid+'\nNote : '+r.pts20.toFixed(1)+'/20');
     return;
   }
   aller('p-formulaire');
 }
 
-function validerFormulaire() {
-  var nom = document.getElementById('f-nom').value.trim();
+function validerFormulaire(){
+  var nom   = document.getElementById('f-nom').value.trim();
   var serie = document.getElementById('f-serie').value;
   var ecole = document.getElementById('f-ecole').value.trim();
-  document.getElementById('err-champs').style.display = 'none';
-  document.getElementById('err-serie').style.display = 'none';
-  if (!nom || !serie || !ecole) { document.getElementById('err-champs').style.display = 'block'; return; }
+  document.getElementById('err-champs').style.display='none';
+  document.getElementById('err-serie').style.display='none';
+  if(!nom||!serie||!ecole){ document.getElementById('err-champs').style.display='block'; return; }
   var qs = null;
-  if (qcmData[serie] && qcmData[serie].questions && qcmData[serie].questions.length) {
+  if(qcmData[serie]&&qcmData[serie].questions&&qcmData[serie].questions.length){
     qs = qcmData[serie].questions;
-  } else if (Object.keys(qcmData).length === 0) {
+  } else if(Object.keys(qcmData).length===0){
     qs = questionsDemo();
-  } else {
-    document.getElementById('err-serie').style.display = 'block'; return;
-  }
+  } else { document.getElementById('err-serie').style.display='block'; return; }
   questions = qs;
-  utilisateur = { nom: nom, serie: serie, ecole: ecole, metier: document.getElementById('f-metier').value, mention: document.getElementById('f-mention').value, uid: genUID(serie), deviceId: getDevId(), date: new Date().toLocaleString('fr-FR') };
-  reponses = {};
-  document.getElementById('serie-chip').textContent = 'Serie ' + serie;
-  afficherQCM();
-  aller('p-qcm');
-  lancerChrono();
+  utilisateur = {
+    nom:nom, serie:serie, ecole:ecole,
+    metier:document.getElementById('f-metier').value,
+    mention:document.getElementById('f-mention').value,
+    uid:genUID(serie), deviceId:getDevId(),
+    date:new Date().toLocaleString('fr-FR')
+  };
+  reponses={};
+  document.getElementById('serie-chip').textContent='Serie '+serie;
+  afficherQCM(); aller('p-qcm'); lancerChrono();
 }
 
-function questionsDemo() {
+function questionsDemo(){
   return [
-    { question: "Quel est le resultat de 2 x 2 x 2 x 5 ?", choices: ["20", "40", "80", "25"], answers: [1], points: 1 },
-    { question: "Formule chimique de l'eau ?", choices: ["H2O2", "HO", "H2O", "H3O"], answers: [2], points: 1 },
-    { question: "Capitale du Cameroun ?", choices: ["Douala", "Bafoussam", "Garoua", "Yaounde"], answers: [3], points: 1 },
-    { question: "Annee d'independance du Cameroun ?", choices: ["1958", "1960", "1962", "1972"], answers: [1], points: 1 },
-    { question: "La photosynthese produit quel gaz ?", choices: ["CO2", "N2", "O2", "H2"], answers: [2], points: 1 },
-    { question: "Theoreme a2 + b2 = c2 ?", choices: ["Thales", "Pythagore", "Euclide", "Fermat"], answers: [1], points: 1 },
-    { question: "Combien de regions au Cameroun ?", choices: ["8", "10", "12", "14"], answers: [1], points: 1 },
-    { question: "Vitesse de la lumiere (approximation) ?", choices: ["200 000 km/s", "300 000 km/s", "400 000 km/s", "150 000 km/s"], answers: [1], points: 1 },
-    { question: "Selectionnez les continents Afrique et Europe (2 reponses)", choices: ["Afrique", "Asie", "Europe", "Oceanie"], answers: [0, 2], points: 2 },
-    { question: "Parmi ces couleurs, les primaires sont (3 reponses) :", choices: ["Rouge", "Orange", "Bleu", "Violet", "Jaune"], answers: [0, 2, 4], points: 3 }
+    {question:"Quel est le resultat de 2 x 2 x 2 x 5 ?",choices:["20","40","80","25"],answers:[1],points:1},
+    {question:"Formule chimique de l'eau ?",choices:["H2O2","HO","H2O","H3O"],answers:[2],points:1},
+    {question:"Capitale du Cameroun ?",choices:["Douala","Bafoussam","Garoua","Yaounde"],answers:[3],points:1},
+    {question:"Annee d'independance du Cameroun ?",choices:["1958","1960","1962","1972"],answers:[1],points:1},
+    {question:"La photosynthese produit quel gaz ?",choices:["CO2","N2","O2","H2"],answers:[2],points:1},
+    {question:"Theoreme a2 + b2 = c2 ?",choices:["Thales","Pythagore","Euclide","Fermat"],answers:[1],points:1},
+    {question:"Combien de regions au Cameroun ?",choices:["8","10","12","14"],answers:[1],points:1},
+    {question:"Vitesse de la lumiere (approximation) ?",choices:["200 000 km/s","300 000 km/s","400 000 km/s","150 000 km/s"],answers:[1],points:1},
+    {question:"Selectionnez les continents Afrique et Europe (2 reponses)",choices:["Afrique","Asie","Europe","Oceanie"],answers:[0,2],points:2},
+    {question:"Parmi ces couleurs, les primaires sont (3 reponses) :",choices:["Rouge","Orange","Bleu","Violet","Jaune"],answers:[0,2,4],points:3}
   ];
 }
 
-function afficherQCM() {
-  var body = document.getElementById('zone-qcm');
-  body.innerHTML = '';
-  var L = ['A', 'B', 'C', 'D', 'E', 'F', 'G'];
-  questions.forEach(function(q, i) {
-    var multi = q.answers.length > 1;
-    var sel = reponses[i] || [];
-    var html = '<div class="question-boite" id="qb-' + i + '">';
-    html += '<div class="q-numero">Question ' + (i + 1) + ' sur ' + questions.length + '</div>';
-    if (multi) html += '<div class="q-badge-multi">Plusieurs reponses — ' + q.answers.length + ' attendues</div>';
-    html += '<div class="q-texte">' + q.question + '</div><div class="choix-liste">';
-    q.choices.forEach(function(c, j) {
-      html += '<div class="choix ' + (sel.indexOf(j) > -1 ? 'choisi' : '') + '" onclick="choisir(' + i + ',' + j + ',' + (multi ? 'true' : 'false') + ')" id="ch-' + i + '-' + j + '">';
-      html += '<div class="choix-lettre" id="cl-' + i + '-' + j + '">' + L[j] + '</div><span>' + c + '</span></div>';
+/* ════ QCM ════ */
+function afficherQCM(){
+  var body = document.getElementById('zone-qcm'); body.innerHTML='';
+  var L=['A','B','C','D','E','F','G'];
+  questions.forEach(function(q,i){
+    var multi = q.answers.length>1;
+    var sel = reponses[i]||[];
+    var html='<div class="question-boite" id="qb-'+i+'">';
+    html+='<div class="q-numero">Question '+(i+1)+' sur '+questions.length+'</div>';
+    if(multi) html+='<div class="q-badge-multi">Plusieurs reponses — '+q.answers.length+' attendues</div>';
+    html+='<div class="q-texte">'+q.question+'</div><div class="choix-liste">';
+    q.choices.forEach(function(c,j){
+      html+='<div class="choix '+(sel.indexOf(j)>-1?'choisi':'')+'" onclick="choisir('+i+','+j+','+(multi?'true':'false')+')" id="ch-'+i+'-'+j+'">';
+      html+='<div class="choix-lettre" id="cl-'+i+'-'+j+'">'+L[j]+'</div><span>'+c+'</span></div>';
     });
-    html += '</div></div>';
-    body.innerHTML += html;
+    html+='</div></div>'; body.innerHTML+=html;
   });
   actualiserProgression();
 }
 
-function choisir(qi, ci, multi) {
-  if (!reponses[qi]) reponses[qi] = [];
-  if (multi) {
-    var x = reponses[qi].indexOf(ci);
-    if (x > -1) reponses[qi].splice(x, 1); else reponses[qi].push(ci);
-  } else {
-    reponses[qi] = [ci];
-  }
-  questions[qi].choices.forEach(function(_, j) {
-    var ch = document.getElementById('ch-' + qi + '-' + j);
-    var cl = document.getElementById('cl-' + qi + '-' + j);
-    if (ch) {
-      var selectionne = reponses[qi].indexOf(j) > -1;
-      ch.classList.toggle('choisi', selectionne);
-      if (cl) { cl.style.background = selectionne ? 'var(--bleu)' : ''; cl.style.borderColor = selectionne ? 'var(--bleu)' : ''; cl.style.color = selectionne ? '#fff' : ''; }
-    }
+function choisir(qi,ci,multi){
+  if(!reponses[qi]) reponses[qi]=[];
+  if(multi){ var x=reponses[qi].indexOf(ci); if(x>-1) reponses[qi].splice(x,1); else reponses[qi].push(ci); }
+  else { reponses[qi]=[ci]; }
+  questions[qi].choices.forEach(function(_,j){
+    var ch=document.getElementById('ch-'+qi+'-'+j);
+    var cl=document.getElementById('cl-'+qi+'-'+j);
+    if(ch){ var s=reponses[qi].indexOf(j)>-1; ch.classList.toggle('choisi',s); if(cl){ cl.style.background=s?'var(--bleu)':''; cl.style.borderColor=s?'var(--bleu)':''; cl.style.color=s?'#fff':''; } }
   });
   actualiserProgression();
 }
 
-function actualiserProgression() {
-  var faites = Object.keys(reponses).filter(function(k) { return reponses[k].length > 0; }).length;
-  var total = questions.length;
-  document.getElementById('prog-texte').textContent = faites + ' / ' + total + ' repondues';
-  document.getElementById('prog-fill').style.width = (faites / total * 100) + '%';
-  var tout = faites >= total;
-  document.getElementById('btn-soumettre').disabled = !tout;
-  document.getElementById('indice-soumettre').style.display = tout ? 'none' : 'block';
-  document.getElementById('alerte-rep').classList.toggle('visible', !tout && faites > 0);
+function actualiserProgression(){
+  var faites=Object.keys(reponses).filter(function(k){ return reponses[k].length>0; }).length;
+  var total=questions.length;
+  document.getElementById('prog-texte').textContent=faites+' / '+total+' repondues';
+  document.getElementById('prog-fill').style.width=(faites/total*100)+'%';
+  var tout=faites>=total;
+  document.getElementById('btn-soumettre').disabled=!tout;
+  document.getElementById('indice-soumettre').style.display=tout?'none':'block';
+  document.getElementById('alerte-rep').classList.toggle('visible',!tout&&faites>0);
 }
 
-function calcTemps() {
-  if (!planning.fin || !planning.date) return tempsRestant;
-  var fin = new Date(planning.date + 'T' + planning.fin).getTime();
-  return Math.max(0, Math.floor((fin - Date.now()) / 1000));
+function calcTemps(){
+  if(!planning.fin||!planning.date) return tempsRestant;
+  return Math.max(0, Math.floor((new Date(planning.date+'T'+planning.fin).getTime()-Date.now())/1000));
 }
-
-function lancerChrono() {
+function lancerChrono(){
   clearInterval(timerInt);
-  tempsRestant = (planning.fin && planning.date) ? calcTemps() : 1800;
+  tempsRestant=(planning.fin&&planning.date)?calcTemps():1800;
   afficherChrono();
-  timerInt = setInterval(function() {
-    tempsRestant = (planning.fin && planning.date) ? calcTemps() : Math.max(0, tempsRestant - 1);
+  timerInt=setInterval(function(){
+    tempsRestant=(planning.fin&&planning.date)?calcTemps():Math.max(0,tempsRestant-1);
     afficherChrono();
-    if (tempsRestant <= 0) { clearInterval(timerInt); soumissionAuto(); }
-  }, 1000);
+    if(tempsRestant<=0){ clearInterval(timerInt); soumissionAuto(); }
+  },1000);
+}
+function afficherChrono(){
+  var m=String(Math.floor(tempsRestant/60)).padStart(2,'0');
+  var s=String(tempsRestant%60).padStart(2,'0');
+  var el=document.getElementById('chrono');
+  if(el){ el.textContent=m+':'+s; el.classList.toggle('urgent',tempsRestant<=120); }
 }
 
-function afficherChrono() {
-  var m = String(Math.floor(tempsRestant / 60)).padStart(2, '0');
-  var s = String(tempsRestant % 60).padStart(2, '0');
-  var el = document.getElementById('chrono');
-  if (el) { el.textContent = m + ':' + s; el.classList.toggle('urgent', tempsRestant <= 120); }
-}
-
-function soumissionAuto() { document.getElementById('m-temps').classList.add('ouvert'); calculerEtAfficher(); }
-function tenterSoumission() {
-  var faites = Object.keys(reponses).filter(function(k) { return reponses[k].length > 0; }).length;
-  if (faites < questions.length) { document.getElementById('alerte-rep').classList.add('visible'); document.getElementById('alerte-rep').scrollIntoView({ behavior: 'smooth' }); return; }
+function soumissionAuto(){ document.getElementById('m-temps').classList.add('ouvert'); calculerEtAfficher(); }
+function tenterSoumission(){
+  var faites=Object.keys(reponses).filter(function(k){ return reponses[k].length>0; }).length;
+  if(faites<questions.length){ document.getElementById('alerte-rep').classList.add('visible'); document.getElementById('alerte-rep').scrollIntoView({behavior:'smooth'}); return; }
   document.getElementById('m-confirmer').classList.add('ouvert');
 }
-function soumettreFinal() { fermerModal('m-confirmer'); calculerEtAfficher(); }
+function soumettreFinal(){ fermerModal('m-confirmer'); calculerEtAfficher(); }
 
-function calculerEtAfficher() {
+function calculerEtAfficher(){
   clearInterval(timerInt);
-  var totalPoss = 0, totalTrouve = 0;
-  questions.forEach(function(q, i) {
-    var correct = q.answers || [0];
-    var donne = reponses[i] || [];
-    totalPoss += correct.length;
-    totalTrouve += donne.filter(function(a) { return correct.indexOf(a) > -1; }).length;
+  var totalPoss=0, totalTrouve=0;
+  questions.forEach(function(q,i){
+    var correct=q.answers||[0];
+    var donne=reponses[i]||[];
+    totalPoss+=correct.length;
+    totalTrouve+=donne.filter(function(a){ return correct.indexOf(a)>-1; }).length;
   });
-  var pts20 = totalPoss > 0 ? (totalTrouve / totalPoss) * 20 : 0;
-  pts20 = Math.round(pts20 * 10) / 10;
-  var entree = Object.assign({}, utilisateur, { totalTrouve: totalTrouve, totalPoss: totalPoss, pts20: pts20, date: new Date().toLocaleString('fr-FR') });
-  resultats.push(entree);
-  sauvegarder();
-  localStorage.setItem('sec4_done_' + utilisateur.deviceId, '1');
+  var pts20 = totalPoss>0?(totalTrouve/totalPoss)*20:0;
+  pts20 = Math.round(pts20*10)/10;
+  var entree = Object.assign({}, utilisateur, {totalTrouve:totalTrouve, totalPoss:totalPoss, pts20:pts20, date:new Date().toLocaleString('fr-FR')});
+  sauvegarder(entree);  /* → Firebase push (visible par tous) */
+  localStorage.setItem('sec4_done_'+utilisateur.deviceId,'1');
   document.getElementById('res-id').textContent = utilisateur.uid;
-  document.getElementById('res-brut').textContent = totalTrouve + '/' + totalPoss;
-  document.getElementById('res-pts').textContent = pts20.toFixed(1) + ' / 20 pts';
-  var mc = '', mm = '', mCls = '';
-  if (pts20 >= 16) { mc = 'Tres Bien'; mm = 'Performance exceptionnelle ! Vous etes pret(e) pour le Bac. Continuez sur cette lancee !'; mCls = 'm-vert'; }
-  else if (pts20 >= 14) { mc = 'Bien'; mm = 'Tres bon resultat ! Quelques revisions vous meneront a l\'excellence.'; mCls = 'm-bleu'; }
-  else if (pts20 >= 10) { mc = 'Passable'; mm = 'Bon courage ! Revoyez les chapitres cles et rejoignez nos cours de soutien S.E. Corporation.'; mCls = 'm-or'; }
-  else { mc = 'A ameliorer'; mm = 'Ne vous decouragez pas ! Les classes preparatoires S.E. Corporation sont la pour vous aider.'; mCls = 'm-rouge'; }
-  document.getElementById('res-mention').innerHTML = '<div class="mention ' + mCls + '">' + mc + '</div>';
-  document.getElementById('res-message').textContent = mm;
+  document.getElementById('res-brut').textContent = totalTrouve+'/'+totalPoss;
+  document.getElementById('res-pts').textContent  = pts20.toFixed(1)+' / 20 pts';
+  /* ---- MENTIONS ---- */
+  var mc='', mm='', mCls='';
+  if(pts20>=20){
+    mc='🏆 Perfection !';
+    mm='Score parfait absolu ! 20/20. Une performance rarissime qui vous place au sommet. Bravo !';
+    mCls='m-vert';
+  } else if(pts20>=18){
+    mc='⭐ Excellent';
+    mm='Performance remarquable ! Vous etes parmi les meilleurs. Le Bac est dans votre poche !';
+    mCls='m-vert';
+  } else if(pts20>=16){
+    mc='Tres Bien';
+    mm='Performance exceptionnelle ! Vous etes pret(e) pour le Bac. Continuez sur cette lancee !';
+    mCls='m-vert';
+  } else if(pts20>=14){
+    mc='Bien';
+    mm='Tres bon resultat ! Quelques revisions supplementaires vous meneront a l\'excellence.';
+    mCls='m-bleu';
+  } else if(pts20>=12){
+    mc='Assez Bien';
+    mm='Bon travail ! Continuez vos revisions pour atteindre la mention Bien au Bac.';
+    mCls='m-or';
+  } else if(pts20>=10){
+    mc='Passable';
+    mm='Bon courage ! Revoyez les chapitres cles et rejoignez nos cours de soutien S.E. Corporation.';
+    mCls='m-or';
+  } else {
+    mc='A ameliorer';
+    mm='Ne vous decouragez pas ! Les classes preparatoires S.E. Corporation sont la pour vous aider.';
+    mCls='m-rouge';
+  }
+  document.getElementById('res-mention').innerHTML='<div class="mention '+mCls+'">'+mc+'</div>';
+  document.getElementById('res-message').textContent=mm;
+  /* Message final admin */
+  if(msgFin&&msgFin.trim()){
+    document.getElementById('msg-fin-contenu').textContent=msgFin;
+    document.getElementById('msg-fin-zone').style.display='block';
+  } else { document.getElementById('msg-fin-zone').style.display='none'; }
   aller('p-resultat');
 }
 
-function rechercherNote() {
-  var id = document.getElementById('lookup-id').value.trim().toUpperCase();
-  var r = resultats.find(function(x) { return x.uid === id; });
-  var box = document.getElementById('lookup-resultat');
-  box.style.display = 'block';
-  if (r) {
-    box.innerHTML = '<div style="font-size:34px;font-weight:900;color:var(--or);margin-bottom:8px">' + r.pts20.toFixed(1) + ' / 20</div><div style="font-size:14px;color:var(--discret)">Serie ' + r.serie + ' — ' + r.ecole + '</div>';
+/* ════ RESULTATS & CLASSEMENT ════ */
+function rechercherNote(){
+  var id=document.getElementById('lookup-id').value.trim().toUpperCase();
+  var r=resultats.find(function(x){ return x.uid===id; });
+  var box=document.getElementById('lookup-resultat');
+  box.style.display='block';
+  if(r){
+    box.innerHTML='<div style="font-size:34px;font-weight:900;color:var(--or);margin-bottom:8px">'+r.pts20.toFixed(1)+' / 20</div><div style="font-size:14px;color:var(--discret)">Serie '+r.serie+' — '+r.ecole+'</div>';
   } else {
-    box.innerHTML = '<div style="font-size:15px;font-weight:800;color:var(--rouge)">Identifiant "' + id + '" introuvable.</div>';
+    box.innerHTML='<div style="font-size:15px;font-weight:800;color:var(--rouge)">Identifiant "'+id+'" introuvable.</div>';
   }
   afficherTop10();
 }
 
-function afficherTop10() {
-  var tries = resultats.slice().sort(function(a, b) { return b.pts20 - a.pts20; }).slice(0, 10);
-  var el = document.getElementById('top10');
-  if (!tries.length) { el.innerHTML = '<div style="color:var(--discret);font-size:14px;padding:12px;text-align:center">Aucun resultat pour l\'instant.</div>'; return; }
-  el.innerHTML = tries.map(function(r, i) {
-    var couleur = r.pts20 >= 16 ? 'var(--vert)' : r.pts20 >= 10 ? 'var(--or)' : 'var(--rouge)';
-    return '<div class="rang-ligne"><span class="rang-num">#' + (i + 1) + '</span><span class="rang-id">' + r.uid + '</span><span class="rang-serie">Serie ' + r.serie + '</span><span class="rang-note" style="color:' + couleur + '">' + r.pts20.toFixed(1) + '</span></div>';
+function afficherTop10(){
+  var tries=resultats.slice().sort(function(a,b){ return b.pts20-a.pts20; }).slice(0,10);
+  var el=document.getElementById('top10');
+  if(!tries.length){ el.innerHTML='<div style="color:var(--discret);font-size:14px;padding:12px;text-align:center">Aucun resultat pour l\'instant.</div>'; return; }
+  el.innerHTML=tries.map(function(r,i){
+    var couleur=r.pts20>=16?'var(--vert)':r.pts20>=10?'var(--or)':'var(--rouge)';
+    return '<div class="rang-ligne"><span class="rang-num">#'+(i+1)+'</span><span class="rang-id">'+r.uid+'</span><span class="rang-serie">Serie '+r.serie+'</span><span class="rang-note" style="color:'+couleur+'">'+r.pts20.toFixed(1)+'</span></div>';
   }).join('');
 }
 
-function connexionAdmin() {
-  if (document.getElementById('mdp-admin').value === MDP) {
-    document.getElementById('err-mdp').style.display = 'none';
-    afficherAdmin();
-    aller('p-admin');
-  } else {
-    document.getElementById('err-mdp').style.display = 'block';
-  }
+/* ════ ADMIN ════ */
+function connexionAdmin(){
+  if(document.getElementById('mdp-admin').value===MDP){
+    document.getElementById('err-mdp').style.display='none';
+    afficherAdmin(); aller('p-admin');
+  } else { document.getElementById('err-mdp').style.display='block'; }
 }
 
-function afficherAdmin() {
-  var n = resultats.length;
-  document.getElementById('st-nb').textContent = n;
-  if (n) {
-    var moy = resultats.reduce(function(s, r) { return s + r.pts20; }, 0) / n;
-    var max = Math.max.apply(null, resultats.map(function(r) { return r.pts20; }));
-    document.getElementById('st-moy').textContent = moy.toFixed(1);
-    document.getElementById('st-max').textContent = max.toFixed(1);
-  } else {
-    document.getElementById('st-moy').textContent = '—';
-    document.getElementById('st-max').textContent = '—';
-  }
-  if (planning.date) document.getElementById('date-ep').value = planning.date;
-  if (planning.debut) document.getElementById('h-debut').value = planning.debut;
-  if (planning.fin) document.getElementById('h-fin').value = planning.fin;
-  afficherListeSeries();
-  afficherOnglets();
-  afficherTableau(ongletAdmin);
+function afficherAdmin(){
+  var n=resultats.length;
+  document.getElementById('st-nb').textContent=n;
+  if(n){
+    var moy=resultats.reduce(function(s,r){ return s+r.pts20; },0)/n;
+    var max=Math.max.apply(null,resultats.map(function(r){ return r.pts20; }));
+    document.getElementById('st-moy').textContent=moy.toFixed(1);
+    document.getElementById('st-max').textContent=max.toFixed(1);
+  } else { document.getElementById('st-moy').textContent='—'; document.getElementById('st-max').textContent='—'; }
+  if(planning.date)  document.getElementById('date-ep').value=planning.date;
+  if(planning.debut) document.getElementById('h-debut').value=planning.debut;
+  if(planning.fin)   document.getElementById('h-fin').value=planning.fin;
+  afficherListeSeries(); afficherOnglets(); afficherTableau(ongletAdmin); chargerAdminAnnonce();
 }
 
-function afficherListeSeries() {
-  document.getElementById('liste-series').innerHTML = SERIES.map(function(s) {
-    return '<div class="serie-ligne"><div class="sl-nom">Serie ' + s + '</div><div class="sl-statut ' + (qcmData[s] ? 'sl-ok' : 'sl-non') + '">' + (qcmData[s] ? qcmData[s].questions.length + ' questions' : 'Aucun QCM') + '</div><div style="margin-left:auto;display:flex;gap:8px"><input type="file" accept=".json" id="up-' + s + '" style="display:none" onchange="chargerJSON(event,\'' + s + '\')"><button class="btn btn-bleu btn-petit" style="padding:9px 14px;font-size:14px" onclick="document.getElementById(\'up-' + s + '\').click()">Charger</button>' + (qcmData[s] ? '<button class="btn btn-rouge btn-petit" style="padding:9px 12px;font-size:14px" onclick="supprimerSerie(\'' + s + '\')">X</button>' : '') + '</div></div>';
+function afficherListeSeries(){
+  document.getElementById('liste-series').innerHTML=SERIES.map(function(s){
+    return '<div class="serie-ligne"><div class="sl-nom">Serie '+s+'</div><div class="sl-statut '+(qcmData[s]?'sl-ok':'sl-non')+'">'+(qcmData[s]?qcmData[s].questions.length+' questions':'Aucun QCM')+'</div><div style="margin-left:auto;display:flex;gap:8px"><input type="file" accept=".json" id="up-'+s+'" style="display:none" onchange="chargerJSON(event,\''+s+'\')"><button class="btn btn-bleu btn-petit" style="padding:9px 14px;font-size:14px" onclick="document.getElementById(\'up-'+s+'\').click()">Charger</button>'+(qcmData[s]?'<button class="btn btn-rouge btn-petit" style="padding:9px 12px;font-size:14px" onclick="supprimerSerie(\''+s+'\')">X</button>':'')+' </div></div>';
   }).join('');
 }
 
-function chargerJSON(e, s) {
-  var f = e.target.files[0]; if (!f) return;
-  var r = new FileReader();
-  r.onload = function(ev) {
-    try {
-      var d = JSON.parse(ev.target.result);
-      if (!d.questions) throw new Error('"questions" manquant');
-      d.questions = d.questions.map(function(q) {
-        if (!q.answers) q.answers = [q.answer !== undefined ? q.answer : 0];
-        if (!q.points) q.points = q.answers.length;
-        return q;
-      });
-      qcmData[s] = d;
-      sauvegarderQCM();
-      afficherListeSeries();
-      alert(d.questions.length + ' questions chargees pour la Serie ' + s + ' !');
-    } catch (err) { alert('Erreur JSON : ' + err.message); }
+function chargerJSON(e,s){
+  var f=e.target.files[0]; if(!f) return;
+  var r=new FileReader();
+  r.onload=function(ev){
+    try{
+      var d=JSON.parse(ev.target.result);
+      if(!d.questions) throw new Error('"questions" manquant');
+      d.questions=d.questions.map(function(q){ if(!q.answers) q.answers=[q.answer!==undefined?q.answer:0]; if(!q.points) q.points=q.answers.length; return q; });
+      qcmData[s]=d; sauvegarderQCM(); afficherListeSeries();
+      alert(d.questions.length+' questions chargees pour la Serie '+s+' !');
+    } catch(err){ alert('Erreur JSON : '+err.message); }
   };
-  r.readAsText(f);
-  e.target.value = '';
+  r.readAsText(f); e.target.value='';
 }
 
-function supprimerSerie(s) {
-  if (confirm('Supprimer le QCM de la Serie ' + s + ' ?')) { delete qcmData[s]; sauvegarderQCM(); afficherListeSeries(); }
+function supprimerSerie(s){
+  if(confirm('Supprimer le QCM de la Serie '+s+' ?')){ delete qcmData[s]; sauvegarderQCM(); afficherListeSeries(); }
+}
+function viderTousQCM(){
+  if(confirm('Vider tous les QCM ?')){ qcmData={}; sauvegarderQCM(); afficherListeSeries(); }
 }
 
-function viderTousQCM() {
-  if (confirm('Vider tous les QCM ?')) { qcmData = {}; sauvegarderQCM(); afficherListeSeries(); }
+function enregistrerPlanning(){
+  planning.date=document.getElementById('date-ep').value;
+  planning.debut=document.getElementById('h-debut').value;
+  planning.fin=document.getElementById('h-fin').value;
+  if(!planning.date||!planning.debut||!planning.fin){ document.getElementById('msg-planning').innerHTML='<span style="color:var(--rouge)">Remplissez tous les champs.</span>'; return; }
+  sauvegarderPlan(); mettreAJourBanniere();
+  document.getElementById('msg-planning').innerHTML='<span style="color:var(--vert)">Planning enregistre sur Firebase !</span>';
 }
 
-function enregistrerPlanning() {
-  planning.date = document.getElementById('date-ep').value;
-  planning.debut = document.getElementById('h-debut').value;
-  planning.fin = document.getElementById('h-fin').value;
-  if (!planning.date || !planning.debut || !planning.fin) { document.getElementById('msg-planning').innerHTML = '<span style="color:var(--rouge)">Remplissez tous les champs.</span>'; return; }
-  sauvegarderPlan();
-  mettreAJourBanniere();
-  document.getElementById('msg-planning').innerHTML = '<span style="color:var(--vert)">Planning enregistre !</span>';
+function afficherOnglets(){
+  var series=Array.from(new Set(resultats.map(function(r){ return r.serie; })));
+  var tabs=['ALL'].concat(series);
+  document.getElementById('onglets-res').innerHTML=tabs.map(function(t){
+    return '<div class="onglet '+(t===ongletAdmin?'actif':'')+'" onclick="changerOnglet(\''+t+'\')">'+(t==='ALL'?'Toutes':t)+'</div>';
+  }).join('');
 }
+function changerOnglet(t){ ongletAdmin=t; afficherOnglets(); afficherTableau(t); }
 
-function afficherOnglets() {
-  var series = Array.from(new Set(resultats.map(function(r) { return r.serie; })));
-  var tabs = ['ALL'].concat(series);
-  document.getElementById('onglets-res').innerHTML = tabs.map(function(t) {
-    return '<div class="onglet ' + (t === ongletAdmin ? 'actif' : '') + '" onclick="changerOnglet(\'' + t + '\')">' + (t === 'ALL' ? 'Toutes' : t) + '</div>';
+function afficherTableau(serie){
+  var filtre=serie==='ALL'?resultats:resultats.filter(function(r){ return r.serie===serie; });
+  var tries=filtre.slice().sort(function(a,b){ return b.pts20-a.pts20; });
+  var corps=document.getElementById('corps-tableau');
+  var vide=document.getElementById('tableau-vide');
+  if(!tries.length){ corps.innerHTML=''; vide.style.display='block'; return; }
+  vide.style.display='none';
+  corps.innerHTML=tries.map(function(r){
+    var c=r.pts20>=16?'var(--vert)':r.pts20>=10?'var(--or)':'var(--rouge)';
+    return '<tr><td class="code-style">'+r.uid+'</td><td style="font-size:13px;max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+r.nom+'</td><td style="font-size:13px">'+r.serie+'</td><td style="font-size:18px;font-weight:900;color:'+c+'">'+r.pts20.toFixed(1)+'</td></tr>';
   }).join('');
 }
 
-function changerOnglet(t) { ongletAdmin = t; afficherOnglets(); afficherTableau(t); }
-
-function afficherTableau(serie) {
-  var filtre = serie === 'ALL' ? resultats : resultats.filter(function(r) { return r.serie === serie; });
-  var tries = filtre.slice().sort(function(a, b) { return b.pts20 - a.pts20; });
-  var corps = document.getElementById('corps-tableau');
-  var vide = document.getElementById('tableau-vide');
-  if (!tries.length) { corps.innerHTML = ''; vide.style.display = 'block'; return; }
-  vide.style.display = 'none';
-  corps.innerHTML = tries.map(function(r) {
-    var c = r.pts20 >= 16 ? 'var(--vert)' : r.pts20 >= 10 ? 'var(--or)' : 'var(--rouge)';
-    return '<tr><td class="code-style">' + r.uid + '</td><td style="font-size:13px;max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + r.nom + '</td><td style="font-size:13px">' + r.serie + '</td><td style="font-size:18px;font-weight:900;color:' + c + '">' + r.pts20.toFixed(1) + '</td></tr>';
-  }).join('');
-}
-
-function exportPublic() {
-  var serie = ongletAdmin === 'ALL' ? null : ongletAdmin;
-  var filtre = serie ? resultats.filter(function(r) { return r.serie === serie; }) : resultats;
-  var groupes = {};
-  filtre.slice().sort(function(a, b) { return b.pts20 - a.pts20; }).forEach(function(r) {
-    if (!groupes[r.serie]) groupes[r.serie] = [];
-    groupes[r.serie].push({ identifiant: r.uid, serie: r.serie, note_sur_20: r.pts20.toFixed(1) });
+function exportPublic(){
+  var serie=ongletAdmin==='ALL'?null:ongletAdmin;
+  var filtre=serie?resultats.filter(function(r){ return r.serie===serie; }):resultats;
+  var groupes={};
+  filtre.slice().sort(function(a,b){ return b.pts20-a.pts20; }).forEach(function(r){
+    if(!groupes[r.serie]) groupes[r.serie]=[];
+    groupes[r.serie].push({identifiant:r.uid,serie:r.serie,note_sur_20:r.pts20.toFixed(1)});
   });
-  telecharger(JSON.stringify({ date: new Date().toLocaleString('fr-FR'), total: filtre.length, resultats_par_serie: groupes }, null, 2), 'SEC_resultats_publics.json');
+  telecharger(JSON.stringify({date:new Date().toLocaleString('fr-FR'),total:filtre.length,resultats_par_serie:groupes},null,2),'SEC_resultats_publics.json');
+}
+function exportComplet(){
+  var serie=ongletAdmin==='ALL'?null:ongletAdmin;
+  var filtre=serie?resultats.filter(function(r){ return r.serie===serie; }):resultats;
+  telecharger(JSON.stringify({date:new Date().toLocaleString('fr-FR'),resultats:filtre.slice().sort(function(a,b){ return b.pts20-a.pts20; })},null,2),'SEC_resultats_complets.json');
+}
+function telecharger(contenu,nom){
+  var a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([contenu],{type:'application/json'}));
+  a.download=nom; a.click();
+}
+function telechargerExemple(){
+  telecharger(JSON.stringify({questions:[
+    {question:"Quel est l'element chimique de symbole O ?",choices:["Osmium","Oxygene","Or","Ozone"],answers:[1],points:1},
+    {question:"Quel est le resultat de 3x3 + 4x4 ?",choices:["25","20","16","49"],answers:[0],points:1},
+    {question:"Selectionnez les nombres premiers parmi 2, 4, 7, 9, 11",choices:["2","4","7","9","11"],answers:[0,2,4],points:3}
+  ]},null,2),'SEC_exemple_qcm.json');
 }
 
-function exportComplet() {
-  var serie = ongletAdmin === 'ALL' ? null : ongletAdmin;
-  var filtre = serie ? resultats.filter(function(r) { return r.serie === serie; }) : resultats;
-  telecharger(JSON.stringify({ date: new Date().toLocaleString('fr-FR'), resultats: filtre.slice().sort(function(a, b) { return b.pts20 - a.pts20; }) }, null, 2), 'SEC_resultats_complets.json');
-}
-
-function telecharger(contenu, nom) {
-  var a = document.createElement('a');
-  a.href = URL.createObjectURL(new Blob([contenu], { type: 'application/json' }));
-  a.download = nom; a.click();
-}
-
-function telechargerExemple() {
-  telecharger(JSON.stringify({ questions: [
-    { question: "Quel est l'element chimique de symbole O ?", choices: ["Osmium", "Oxygene", "Or", "Ozone"], answers: [1], points: 1 },
-    { question: "Quel est le resultat de 3x3 + 4x4 ?", choices: ["25", "20", "16", "49"], answers: [0], points: 1 },
-    { question: "Selectionnez les nombres premiers parmi 2, 4, 7, 9, 11", choices: ["2", "4", "7", "9", "11"], answers: [0, 2, 4], points: 3 }
-  ]}, null, 2), 'SEC_exemple_qcm.json');
-}
-
-function reinitTentatives() {
-  if (confirm('Reinitialiser les tentatives ? Les eleves pourront repasser.')) {
-    Object.keys(localStorage).filter(function(k) { return k.startsWith('sec4_done_'); }).forEach(function(k) { localStorage.removeItem(k); });
+function reinitTentatives(){
+  if(confirm('Reinitialiser les tentatives ? Les eleves pourront repasser.')){
+    Object.keys(localStorage).filter(function(k){ return k.startsWith('sec4_done_'); }).forEach(function(k){ localStorage.removeItem(k); });
     alert('Tentatives reinitialisees.');
   }
 }
-
-function effacerResultats() {
-  if (confirm('Effacer TOUS les resultats ? Irreversible !')) { resultats = []; sauvegarder(); afficherAdmin(); }
-}
-
-/* ═══════════════ ANNONCE & MESSAGE FINAL ═══════════════ */
-var annonceData = JSON.parse(localStorage.getItem('sec4_annonce') || '{"active":false,"titre":"","message":"","photo":""}');
-var msgFin = localStorage.getItem('sec4_msg_fin') || '';
-
-function sauvegarderAnnonceData() { localStorage.setItem('sec4_annonce', JSON.stringify(annonceData)); }
-
-function afficherPopupAnnonce() {
-  if (!annonceData.active || (!annonceData.message && !annonceData.photo)) return;
-  document.getElementById('annonce-titre').textContent = annonceData.titre || 'Annonce de S.E. Corporation';
-  document.getElementById('annonce-msg').textContent = annonceData.message || '';
-  var img = document.getElementById('annonce-img');
-  if (annonceData.photo) { img.src = annonceData.photo; img.style.display = 'block'; }
-  else { img.style.display = 'none'; }
-  document.getElementById('popup-annonce').classList.add('ouvert');
-}
-
-function fermerAnnonce() { document.getElementById('popup-annonce').classList.remove('ouvert'); }
-
-function afficherMsgFin() {
-  var zone = document.getElementById('msg-fin-zone');
-  var contenu = document.getElementById('msg-fin-contenu');
-  var m = localStorage.getItem('sec4_msg_fin') || '';
-  if (m && m.trim()) {
-    contenu.textContent = m;
-    zone.style.display = 'block';
-  } else { zone.style.display = 'none'; }
-}
-
-/* ADMIN ANNONCE */
-function basculerAnnonce() {
-  annonceData.active = !annonceData.active;
-  var btn = document.getElementById('toggle-annonce');
-  var lbl = document.getElementById('toggle-annonce-lbl');
-  btn.classList.toggle('on', annonceData.active);
-  lbl.textContent = annonceData.active ? 'Annonce activee' : 'Annonce desactivee';
-  sauvegarderAnnonceData();
-}
-
-function previsualiserPhoto(e) {
-  var f = e.target.files[0]; if (!f) return;
-  var r = new FileReader();
-  r.onload = function(ev) {
-    var ap = document.getElementById('annonce-apercu');
-    ap.src = ev.target.result; ap.style.display = 'block';
-    document.getElementById('annonce-photo-info').textContent = 'Photo : ' + f.name + ' (' + Math.round(ev.target.result.length / 1024) + ' Ko)';
-    annonceData.photo = ev.target.result;
-  };
-  r.readAsDataURL(f);
-}
-
-function supprimerPhotoAnnonce() {
-  annonceData.photo = '';
-  document.getElementById('annonce-apercu').style.display = 'none';
-  document.getElementById('annonce-apercu').src = '';
-  document.getElementById('annonce-photo-info').textContent = 'Photo retiree.';
-  document.getElementById('annonce-admin-photo').value = '';
-  sauvegarderAnnonceData();
-}
-
-function sauvegarderAnnonce() {
-  annonceData.titre = document.getElementById('annonce-admin-titre').value.trim() || 'Annonce de S.E. Corporation';
-  annonceData.message = document.getElementById('annonce-admin-msg').value.trim();
-  sauvegarderAnnonceData();
-  document.getElementById('msg-annonce').innerHTML = '<span style="color:var(--vert)">Annonce enregistree avec succes !</span>';
-  setTimeout(function() { document.getElementById('msg-annonce').innerHTML = ''; }, 3000);
-}
-
-function sauvegarderMsgFin() {
-  var val = document.getElementById('msg-fin-admin').value.trim();
-  localStorage.setItem('sec4_msg_fin', val);
-  document.getElementById('msg-fin-statut').innerHTML = '<span style="color:var(--vert)">Message final enregistre !</span>';
-  setTimeout(function() { document.getElementById('msg-fin-statut').innerHTML = ''; }, 3000);
-}
-
-function chargerAdminAnnonce() {
-  document.getElementById('annonce-admin-titre').value = annonceData.titre || '';
-  document.getElementById('annonce-admin-msg').value = annonceData.message || '';
-  document.getElementById('msg-fin-admin').value = localStorage.getItem('sec4_msg_fin') || '';
-  var btn = document.getElementById('toggle-annonce');
-  var lbl = document.getElementById('toggle-annonce-lbl');
-  btn.classList.toggle('on', annonceData.active);
-  lbl.textContent = annonceData.active ? 'Annonce activee' : 'Annonce desactivee';
-  if (annonceData.photo) {
-    var ap = document.getElementById('annonce-apercu');
-    ap.src = annonceData.photo; ap.style.display = 'block';
-    document.getElementById('annonce-photo-info').textContent = 'Photo enregistree en memoire.';
+function effacerResultats(){
+  if(confirm('Effacer TOUS les resultats ? Irreversible !')){
+    db.ref('sec4/resultats').remove();
+    resultats=[]; afficherAdmin();
   }
 }
 
-/* APPELER chargerAdminAnnonce depuis afficherAdmin */
-var _origAfficherAdmin = afficherAdmin;
-afficherAdmin = function() { _origAfficherAdmin(); chargerAdminAnnonce(); };
+/* ════ ANNONCE ════ */
+function compresserImage(file, cb){
+  var reader=new FileReader();
+  reader.onload=function(e){
+    var img=new Image();
+    img.onload=function(){
+      var canvas=document.createElement('canvas');
+      var MAX=800, w=img.width, h=img.height;
+      if(w>MAX){ h=Math.round(h*MAX/w); w=MAX; }
+      canvas.width=w; canvas.height=h;
+      canvas.getContext('2d').drawImage(img,0,0,w,h);
+      cb(canvas.toDataURL('image/jpeg',0.82));
+    };
+    img.src=e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
 
-/* AFFICHER MSG FIN depuis calculerEtAfficher */
-var _origCalc = calculerEtAfficher;
-calculerEtAfficher = function() { _origCalc(); afficherMsgFin(); };
+function afficherPopupAnnonce(){
+  if(!annonceData.active||(!annonceData.message&&!annonceData.photo)) return;
+  document.getElementById('annonce-titre').textContent=annonceData.titre||'Annonce de S.E. Corporation';
+  document.getElementById('annonce-msg').textContent=annonceData.message||'';
+  var img=document.getElementById('annonce-img');
+  if(annonceData.photo){ img.src=annonceData.photo; img.style.display='block'; }
+  else { img.style.display='none'; }
+  document.getElementById('popup-annonce').classList.add('ouvert');
+}
+function fermerAnnonce(){ document.getElementById('popup-annonce').classList.remove('ouvert'); }
 
-/* LANCEMENT AU DEMARRAGE */
-window.addEventListener('load', function() { afficherPopupAnnonce(); });
+function basculerAnnonce(){
+  annonceData.active=!annonceData.active;
+  var btn=document.getElementById('toggle-annonce');
+  var lbl=document.getElementById('toggle-annonce-lbl');
+  btn.classList.toggle('on',annonceData.active);
+  lbl.textContent=annonceData.active?'Annonce activee':'Annonce desactivee';
+  sauvegarderAnnonceData();
+}
 
-afficherTop10();
+function previsualiserPhoto(e){
+  var f=e.target.files[0]; if(!f) return;
+  compresserImage(f, function(dataUrl){
+    var ap=document.getElementById('annonce-apercu');
+    ap.src=dataUrl; ap.style.display='block';
+    document.getElementById('annonce-photo-info').textContent='Photo compressée : '+Math.round(dataUrl.length/1024)+' Ko';
+    annonceData.photo=dataUrl;
+  });
+}
+function supprimerPhotoAnnonce(){
+  annonceData.photo='';
+  document.getElementById('annonce-apercu').style.display='none';
+  document.getElementById('annonce-apercu').src='';
+  document.getElementById('annonce-photo-info').textContent='Photo retiree.';
+  document.getElementById('annonce-admin-photo').value='';
+  sauvegarderAnnonceData();
+}
+function sauvegarderAnnonce(){
+  annonceData.titre=document.getElementById('annonce-admin-titre').value.trim()||'Annonce de S.E. Corporation';
+  annonceData.message=document.getElementById('annonce-admin-msg').value.trim();
+  sauvegarderAnnonceData();
+  document.getElementById('msg-annonce').innerHTML='<span style="color:var(--vert)">✓ Annonce publiee sur Firebase — visible par tous !</span>';
+  setTimeout(function(){ document.getElementById('msg-annonce').innerHTML=''; },4000);
+}
+function sauvegarderMsgFin(){
+  var val=document.getElementById('msg-fin-admin').value.trim();
+  sauvegarderMsgFinDB(val);
+  document.getElementById('msg-fin-statut').innerHTML='<span style="color:var(--vert)">✓ Message final enregistre sur Firebase !</span>';
+  setTimeout(function(){ document.getElementById('msg-fin-statut').innerHTML=''; },4000);
+}
+function chargerAdminAnnonce(){
+  document.getElementById('annonce-admin-titre').value=annonceData.titre||'';
+  document.getElementById('annonce-admin-msg').value=annonceData.message||'';
+  document.getElementById('msg-fin-admin').value=msgFin||'';
+  var btn=document.getElementById('toggle-annonce');
+  var lbl=document.getElementById('toggle-annonce-lbl');
+  btn.classList.toggle('on',annonceData.active);
+  lbl.textContent=annonceData.active?'Annonce activee':'Annonce desactivee';
+  if(annonceData.photo){
+    var ap=document.getElementById('annonce-apercu');
+    ap.src=annonceData.photo; ap.style.display='block';
+    document.getElementById('annonce-photo-info').textContent='Photo chargee depuis Firebase.';
+  }
+}
+
+/* ════ FIREBASE : CHARGEMENT INITIAL + LISTENERS TEMPS REEL ════ */
+function initialiserFirebase(){
+  Promise.all([
+    db.ref('sec4/qcm').once('value'),
+    db.ref('sec4/planning').once('value'),
+    db.ref('sec4/resultats').once('value'),
+    db.ref('sec4/annonce').once('value'),
+    db.ref('sec4/msgFin').once('value')
+  ]).then(function(snaps){
+    qcmData     = snaps[0].val() || {};
+    planning    = snaps[1].val() || {date:'',debut:'',fin:''};
+    var res     = snaps[2].val(); resultats = res ? Object.values(res) : [];
+    annonceData = snaps[3].val() || {active:false,titre:'',message:'',photo:''};
+    msgFin      = snaps[4].val() || '';
+
+    /* Masquer chargement et afficher le site */
+    document.getElementById('ecran-chargement').style.display='none';
+    mettreAJourBanniere();
+    afficherTop10();
+    afficherPopupAnnonce();
+
+    /* Listeners temps réel — synchronisation entre tous les appareils */
+    db.ref('sec4/qcm').on('value',function(s){ qcmData=s.val()||{}; });
+    db.ref('sec4/planning').on('value',function(s){ planning=s.val()||{date:'',debut:'',fin:''}; mettreAJourBanniere(); });
+    db.ref('sec4/resultats').on('value',function(s){ var v=s.val(); resultats=v?Object.values(v):[]; afficherTop10(); });
+    db.ref('sec4/annonce').on('value',function(s){ annonceData=s.val()||{active:false,titre:'',message:'',photo:''}; });
+    db.ref('sec4/msgFin').on('value',function(s){ msgFin=s.val()||''; });
+
+  }).catch(function(err){
+    console.error('Erreur Firebase :', err);
+    document.getElementById('ecran-chargement').style.display='none';
+    document.getElementById('firebase-erreur').style.display='flex';
+  });
+}
+
+initialiserFirebase();
 </script>
 </body>
 </html>
