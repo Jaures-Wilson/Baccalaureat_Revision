@@ -1,0 +1,1090 @@
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>S.E. Corporation — QCM Baccalauréat</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{background:#0f1117;color:#f0f2f8;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:16px;line-height:1.5;-webkit-text-size-adjust:100%;text-size-adjust:100%}
+:root{
+  --or:#f5c518;--or2:#c9a010;
+  --bleu:#3a72f0;--bleu2:#6090ff;
+  --rouge:#e03535;--vert:#22c55e;--orange:#f59e0b;
+  --fond:#0f1117;--carte:#1c2030;--carte2:#242838;--carte3:#2e3448;
+  --ligne:rgba(255,255,255,0.09);--discret:#8a95aa;--txt:#f0f2f8;
+}
+.page{display:none;flex-direction:column;min-height:100vh}
+.page.actif{display:flex}
+
+/* BARRE TOP */
+.barre{background:#0a0c14;border-bottom:1px solid var(--ligne);padding:12px 16px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:300}
+.barre-logo{font-size:16px;font-weight:900;color:var(--or);letter-spacing:.3px;line-height:1.2}
+.barre-sous{font-size:11px;color:var(--discret)}
+.barre-btn{background:var(--carte2);border:1px solid var(--ligne);border-radius:8px;padding:9px 16px;font-size:13px;font-weight:700;color:var(--txt);cursor:pointer;white-space:nowrap}
+
+/* DÉFILANT */
+.defilant{background:#090b12;border-bottom:1px solid var(--ligne);height:28px;display:flex;align-items:center;overflow:hidden;flex-shrink:0}
+.def-interieur{display:flex;gap:80px;white-space:nowrap;animation:defil 45s linear infinite;font-size:11px;color:var(--or);font-weight:600}
+@keyframes defil{0%{transform:translateX(100vw)}100%{transform:translateX(-500%)}}
+
+/* HERO */
+.hero{background:var(--carte);padding:32px 20px 28px;text-align:center;border-bottom:1px solid var(--ligne)}
+.hero-chip{display:inline-block;background:var(--bleu);color:#fff;border-radius:20px;padding:5px 18px;font-size:12px;font-weight:800;margin-bottom:14px;text-transform:uppercase;letter-spacing:1px}
+.hero h1{font-size:28px;font-weight:900;color:#fff;line-height:1.2;margin-bottom:10px}
+.hero h1 span{color:var(--or);display:block}
+.hero p{font-size:15px;color:var(--discret);margin:0 auto 20px;line-height:1.6;max-width:320px}
+.stats{display:flex;justify-content:center;gap:36px}
+.stat-chiffre{font-size:26px;font-weight:900;color:var(--or)}
+.stat-label{font-size:11px;color:var(--discret);margin-top:2px}
+
+/* CONTENEUR PRINCIPAL */
+.contenu{flex:1;padding:20px 16px;max-width:480px;width:100%;margin:0 auto}
+
+/* BANDEAU STATUT */
+.statut{border-radius:12px;padding:14px 16px;font-size:14px;font-weight:700;margin-bottom:16px;border:1.5px solid}
+.s-ferme{background:rgba(224,53,53,.12);border-color:rgba(224,53,53,.35);color:var(--rouge)}
+.s-ouvert{background:rgba(34,197,94,.12);border-color:rgba(34,197,94,.35);color:var(--vert)}
+.s-bientot{background:rgba(245,158,11,.12);border-color:rgba(245,158,11,.35);color:var(--orange)}
+
+/* CARTES MENU */
+.carte-menu{background:var(--carte);border:1.5px solid var(--ligne);border-radius:16px;padding:20px;margin-bottom:14px;cursor:pointer;transition:border-color .15s;display:block;width:100%;text-align:left}
+.carte-menu:active{border-color:var(--bleu2);background:var(--carte2)}
+.carte-tag{display:inline-block;border-radius:6px;font-size:11px;font-weight:800;padding:3px 10px;margin-bottom:10px;text-transform:uppercase;letter-spacing:.5px}
+.t-bleu{background:var(--bleu);color:#fff}
+.t-gris{background:var(--carte3);color:var(--discret)}
+.carte-titre{font-size:19px;font-weight:800;color:#fff;margin-bottom:5px}
+.carte-desc{font-size:14px;color:var(--discret);line-height:1.5}
+
+/* PROMO */
+.promo{background:linear-gradient(135deg,#111d3a,#1a1030);border:1.5px solid rgba(245,197,24,.25);border-radius:16px;padding:20px;margin-bottom:16px}
+.promo-titre{font-size:17px;font-weight:800;color:var(--or);margin-bottom:8px}
+.promo-texte{font-size:14px;color:#a0b4d0;line-height:1.7;margin-bottom:16px}
+.lien-wa{display:block;background:#1db954;border-radius:12px;padding:16px;font-size:16px;font-weight:800;color:#fff;text-align:center;text-decoration:none;letter-spacing:.3px}
+.lien-wa:active{opacity:.8}
+
+/* BOUTONS */
+.btn{display:block;width:100%;border:none;border-radius:12px;padding:17px;font-size:16px;font-weight:800;cursor:pointer;text-align:center;transition:opacity .15s,transform .1s;letter-spacing:.2px;font-family:inherit}
+.btn:active{opacity:.8;transform:scale(.98)}
+.btn-bleu{background:var(--bleu);color:#fff}
+.btn-or{background:var(--or);color:#000}
+.btn-rouge{background:var(--rouge);color:#fff}
+.btn-gris{background:var(--carte2);border:1.5px solid var(--ligne);color:var(--txt)}
+.btn-vert{background:var(--vert);color:#000}
+.btn:disabled{opacity:.3;cursor:not-allowed}
+.duo{display:flex;gap:10px}
+.duo .btn{flex:1}
+.btn-petit{padding:10px 16px;font-size:14px;width:auto;display:inline-block;border-radius:10px}
+
+/* FORMULAIRE */
+.etiquette{display:block;font-size:13px;font-weight:700;color:var(--discret);margin-bottom:7px;text-transform:uppercase;letter-spacing:.5px}
+input,select,textarea{display:block;width:100%;background:var(--carte2);border:1.5px solid var(--ligne);border-radius:12px;padding:15px 16px;font-size:16px;color:var(--txt);outline:none;-webkit-appearance:none;appearance:none;font-family:inherit;transition:border-color .2s}
+input:focus,select:focus{border-color:var(--bleu2)}
+select option{background:var(--carte)}
+.champ{margin-bottom:16px}
+input[type=time],input[type=date]{text-align:center}
+
+/* ENCART */
+.encart{flex:1;padding:20px 16px;max-width:480px;width:100%;margin:0 auto}
+.encart-titre{font-size:23px;font-weight:900;color:#fff;margin-bottom:8px}
+.encart-sous{font-size:14px;color:var(--discret);margin-bottom:20px;line-height:1.5}
+
+/* MESSAGE MOTIVATION */
+.motiv{background:var(--carte);border-left:4px solid var(--or);border-radius:0 12px 12px 0;padding:16px;margin-bottom:18px;font-size:14px;color:#b0c0d8;line-height:1.6}
+.motiv b{display:block;color:var(--or);font-size:15px;margin-bottom:5px}
+
+/* ERREUR */
+.erreur{background:rgba(224,53,53,.15);border:2px solid var(--rouge);border-radius:12px;padding:15px;font-size:15px;font-weight:800;color:var(--rouge);display:none;margin-bottom:16px;text-align:center}
+.avertissement{background:rgba(245,158,11,.12);border:2px solid var(--orange);border-radius:12px;padding:15px;font-size:15px;font-weight:800;color:var(--orange);display:none;margin-bottom:16px;text-align:center}
+
+/* BARRE QCM */
+.qbarre{background:#0a0c14;border-bottom:1px solid var(--ligne);padding:12px 16px;display:flex;align-items:center;gap:14px;position:sticky;top:0;z-index:300}
+.chrono{background:var(--carte2);border:1.5px solid var(--ligne);border-radius:10px;padding:9px 16px;font-size:24px;font-weight:900;font-variant-numeric:tabular-nums;color:var(--or);letter-spacing:3px;flex-shrink:0;min-width:110px;text-align:center}
+.chrono.urgent{color:var(--rouge);animation:bat .5s infinite alternate}
+@keyframes bat{to{opacity:.35}}
+.progression{flex:1}
+.prog-txt{font-size:12px;color:var(--discret);margin-bottom:4px}
+.prog-barre{height:6px;background:var(--carte2);border-radius:4px;overflow:hidden}
+.prog-remplissage{height:100%;background:var(--bleu);border-radius:4px;transition:width .3s}
+.serie-etiquette{background:var(--carte2);border:1px solid var(--ligne);border-radius:8px;padding:5px 12px;font-size:13px;font-weight:700;color:var(--bleu2);flex-shrink:0}
+
+/* ALERTE RÉPONSES */
+.alerte-rep{background:rgba(224,53,53,.18);border:2px solid var(--rouge);border-radius:12px;padding:16px;font-size:16px;font-weight:800;color:var(--rouge);text-align:center;margin:14px 16px;display:none}
+.alerte-rep.visible{display:block}
+
+/* QUESTIONS */
+.zone-questions{padding:14px 16px;max-width:480px;margin:0 auto;width:100%}
+.question-boite{background:var(--carte);border:1px solid var(--ligne);border-radius:16px;padding:20px;margin-bottom:14px}
+.q-numero{font-size:11px;font-weight:700;color:var(--bleu2);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px}
+.q-badge-multi{display:inline-block;background:rgba(245,158,11,.15);border:1px solid rgba(245,158,11,.3);border-radius:8px;padding:5px 12px;font-size:12px;font-weight:700;color:var(--orange);margin-bottom:12px}
+.q-texte{font-size:17px;font-weight:700;color:#fff;line-height:1.5;margin-bottom:18px}
+.choix-liste{display:flex;flex-direction:column;gap:10px}
+.choix{background:var(--carte2);border:2px solid var(--ligne);border-radius:12px;padding:16px 14px;cursor:pointer;display:flex;align-items:center;gap:12px;font-size:15px;color:var(--txt);font-weight:500;min-height:54px;transition:border-color .15s,background .15s}
+.choix:active{transform:scale(.98)}
+.choix.choisi{border-color:var(--bleu2);background:rgba(58,114,240,.18);color:#fff;font-weight:700}
+.choix-lettre{width:32px;height:32px;border-radius:50%;background:var(--carte3);border:1.5px solid var(--ligne);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;flex-shrink:0;color:var(--discret)}
+.choix.choisi .choix-lettre{background:var(--bleu);border-color:var(--bleu);color:#fff}
+
+/* ZONE SOUMISSION */
+.zone-soumettre{padding:0 16px 30px;max-width:480px;margin:0 auto;width:100%}
+.indice-soumettre{text-align:center;font-size:14px;font-weight:700;color:var(--rouge);margin-top:12px;padding:12px;background:rgba(224,53,53,.1);border-radius:10px}
+
+/* RÉSULTAT */
+.res-page{flex:1;padding:22px 16px;text-align:center;max-width:480px;margin:0 auto;width:100%}
+.boite-id{background:var(--carte);border:2px dashed var(--or2);border-radius:14px;padding:18px;margin:16px 0}
+.id-etiquette{font-size:12px;color:var(--discret);margin-bottom:8px;font-weight:700;text-transform:uppercase;letter-spacing:.5px}
+.id-valeur{font-size:40px;font-weight:900;color:var(--or);letter-spacing:8px;font-family:monospace}
+.id-note{font-size:13px;color:var(--discret);margin-top:8px;line-height:1.4}
+.anneau{width:150px;height:150px;border-radius:50%;border:5px solid var(--or);display:flex;flex-direction:column;align-items:center;justify-content:center;margin:20px auto;background:var(--carte)}
+.anneau-chiffre{font-size:36px;font-weight:900;color:var(--or)}
+.anneau-label{font-size:11px;color:var(--discret)}
+.note-20{font-size:32px;font-weight:900;color:var(--or);margin:8px 0}
+.mention{display:inline-block;border-radius:12px;padding:8px 24px;font-size:16px;font-weight:800;margin:10px 0}
+.m-vert{background:rgba(34,197,94,.15);color:var(--vert);border:1px solid rgba(34,197,94,.3)}
+.m-bleu{background:rgba(58,114,240,.15);color:var(--bleu2);border:1px solid rgba(58,114,240,.3)}
+.m-or{background:rgba(245,197,24,.15);color:var(--or);border:1px solid rgba(245,197,24,.3)}
+.m-rouge{background:rgba(224,53,53,.15);color:var(--rouge);border:1px solid rgba(224,53,53,.3)}
+.message-res{font-size:14px;color:var(--discret);line-height:1.6;padding:16px;background:var(--carte);border-radius:12px;margin:14px 0}
+
+/* CLASSEMENT */
+.rang-ligne{display:flex;align-items:center;padding:13px 0;border-bottom:1px solid var(--ligne);gap:10px}
+.rang-num{font-size:17px;font-weight:900;color:var(--or);min-width:32px}
+.rang-id{font-family:monospace;font-size:16px;font-weight:800;color:#fff}
+.rang-serie{font-size:12px;color:var(--discret);flex:1;margin-left:6px}
+.rang-note{font-size:18px;font-weight:900}
+
+/* ADMIN */
+.stats-grille{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+.stat-carte{background:var(--carte);border:1px solid var(--ligne);border-radius:12px;padding:14px;text-align:center}
+.stat-n{font-size:24px;font-weight:900;color:var(--or)}
+.stat-l{font-size:10px;color:var(--discret);text-transform:uppercase;letter-spacing:.5px;margin-top:3px}
+.section{background:var(--carte);border:1px solid var(--ligne);border-radius:14px;padding:18px;margin-bottom:14px}
+.section-titre{font-size:12px;font-weight:700;color:var(--discret);text-transform:uppercase;letter-spacing:1px;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--ligne)}
+.serie-ligne{display:flex;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid var(--ligne);flex-wrap:wrap}
+.serie-ligne:last-child{border:none;padding-bottom:0}
+.sl-nom{font-size:16px;font-weight:800;color:#fff;min-width:55px}
+.sl-statut{font-size:12px;font-weight:700;padding:4px 12px;border-radius:20px}
+.sl-ok{background:rgba(34,197,94,.15);color:var(--vert)}
+.sl-non{background:rgba(224,53,53,.15);color:var(--rouge)}
+.grille-temps{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+.temps-label{font-size:12px;color:var(--discret);font-weight:700;margin-bottom:6px}
+.onglets{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.onglet{padding:9px 18px;border-radius:20px;font-size:14px;font-weight:700;cursor:pointer;border:1.5px solid var(--ligne);background:var(--carte2);color:var(--discret);transition:all .15s}
+.onglet.actif{background:var(--bleu);color:#fff;border-color:var(--bleu)}
+.tableau-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:10px}
+table{width:100%;border-collapse:collapse;font-size:14px;min-width:340px}
+th{text-align:left;padding:10px 12px;color:var(--discret);font-size:11px;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--ligne);background:var(--carte2);white-space:nowrap}
+td{padding:12px;border-bottom:1px solid var(--ligne);vertical-align:middle}
+tr:last-child td{border:none}
+.code-style{font-family:monospace;font-weight:900;color:var(--or);font-size:16px}
+.info-json{background:var(--carte2);border-radius:8px;padding:4px 10px;font-size:11px;font-family:monospace;color:var(--orange);display:inline}
+
+/* MODAL */
+.modal-fond{display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:500;align-items:flex-end;justify-content:center}
+.modal-fond.ouvert{display:flex}
+.modal{background:var(--carte);border:1px solid var(--ligne);border-radius:20px 20px 0 0;padding:26px 20px 38px;width:100%;max-width:480px;max-height:88vh;overflow-y:auto}
+.modal h3{font-size:21px;font-weight:900;color:#fff;margin-bottom:10px}
+.modal p{font-size:15px;color:var(--discret);margin-bottom:22px;line-height:1.6}
+
+/* SEPARATEUR */
+.sep{height:1px;background:var(--ligne);margin:16px 0}
+.pied{padding:18px 16px;text-align:center;border-top:1px solid var(--ligne);font-size:12px;color:var(--discret)}
+.pied strong{color:var(--or)}
+
+/* POPUP ANNONCE */
+.annonce-fond{display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:900;align-items:center;justify-content:center;padding:16px}
+.annonce-fond.ouvert{display:flex}
+.annonce-boite{background:var(--carte);border:2px solid var(--or2);border-radius:20px;width:100%;max-width:440px;max-height:90vh;overflow-y:auto;box-shadow:0 8px 48px rgba(0,0,0,.6)}
+.annonce-header{background:linear-gradient(135deg,#1a1506,#0f1117);border-bottom:1px solid rgba(245,197,24,.2);padding:18px 20px 14px;border-radius:18px 18px 0 0}
+.annonce-badge{display:inline-block;background:var(--or);color:#000;border-radius:20px;padding:4px 16px;font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:10px}
+.annonce-titre{font-size:20px;font-weight:900;color:#fff;line-height:1.3}
+.annonce-corps{padding:20px}
+.annonce-photo{width:100%;border-radius:12px;margin-bottom:16px;object-fit:cover;max-height:220px;display:block}
+.annonce-message{font-size:15px;color:#c8d4e8;line-height:1.7;white-space:pre-wrap;margin-bottom:20px}
+.annonce-fermer{display:block;width:100%;background:var(--or);color:#000;border:none;border-radius:12px;padding:16px;font-size:16px;font-weight:900;cursor:pointer;font-family:inherit;letter-spacing:.3px}
+.annonce-fermer:active{opacity:.8}
+
+/* MESSAGE FINAL QCM */
+.msg-fin-boite{background:linear-gradient(135deg,rgba(224,53,53,.1),rgba(245,158,11,.08));border:2px solid rgba(224,53,53,.4);border-radius:14px;padding:18px;margin:16px 0;text-align:left}
+.msg-fin-badge{display:inline-block;background:var(--rouge);color:#fff;border-radius:8px;padding:4px 14px;font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px}
+.msg-fin-texte{font-size:14px;color:#d0c8c8;line-height:1.7;white-space:pre-wrap}
+
+/* ADMIN ANNONCE */
+.annonce-apercu{width:100%;border-radius:10px;margin-top:10px;object-fit:cover;max-height:160px;display:none;border:1.5px solid var(--ligne)}
+textarea{display:block;width:100%;background:var(--carte2);border:1.5px solid var(--ligne);border-radius:12px;padding:14px 16px;font-size:14px;color:var(--txt);outline:none;font-family:inherit;resize:vertical;transition:border-color .2s;line-height:1.6}
+textarea:focus{border-color:var(--bleu2)}
+.toggle-ligne{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.toggle-label{font-size:14px;font-weight:700;color:var(--discret)}
+.toggle{width:46px;height:26px;background:var(--carte3);border-radius:20px;border:none;cursor:pointer;position:relative;transition:background .2s;flex-shrink:0}
+.toggle::after{content:'';position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:left .2s}
+.toggle.on{background:var(--vert)}
+.toggle.on::after{left:23px}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════
+     POPUP ANNONCE (ouvert au démarrage)
+══════════════════════════════════ -->
+<div class="annonce-fond" id="popup-annonce">
+  <div class="annonce-boite">
+    <div class="annonce-header">
+      <div class="annonce-badge">📢 Annonce importante</div>
+      <div class="annonce-titre" id="annonce-titre">Annonce de S.E. Corporation</div>
+    </div>
+    <div class="annonce-corps">
+      <img id="annonce-img" class="annonce-photo" src="" alt="Annonce" style="display:none">
+      <div class="annonce-message" id="annonce-msg"></div>
+      <button class="annonce-fermer" onclick="fermerAnnonce()">J'ai pris connaissance — Continuer ✓</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════
+     ACCUEIL
+══════════════════════════════════ -->
+<div class="page actif" id="p-accueil">
+  <div class="barre">
+    <div>
+      <div class="barre-logo">S.E. CORPORATION</div>
+      <div class="barre-sous">Excellence · Since 2015</div>
+    </div>
+    <button class="barre-btn" onclick="aller('p-login')">Admin</button>
+  </div>
+
+  <div class="defilant">
+    <div class="def-interieur">
+      <span>Preparez le Bac 2026 avec S.E. Corporation</span>
+      <span>Classes preparatoires : Polytechnique, ENSP, ENAM, IRIC</span>
+      <span>10 ans d'excellence au Cameroun</span>
+      <span>Directeur : Jaures Wilson MBOUMELA</span>
+      <span>Orientation, coaching, concours nationaux</span>
+    </div>
+  </div>
+
+  <div class="hero">
+    <div class="hero-chip">BAC 2026</div>
+    <h1>Revision QCM<span>S.E. Corporation</span></h1>
+    <p>Testez vos connaissances par serie, chronometre, avec resultats et classement.</p>
+    <div class="stats">
+      <div><div class="stat-chiffre">10+</div><div class="stat-label">Ans</div></div>
+      <div><div class="stat-chiffre">1000+</div><div class="stat-label">Eleves</div></div>
+      <div><div class="stat-chiffre">95%</div><div class="stat-label">Reussite</div></div>
+    </div>
+  </div>
+
+  <div class="contenu">
+    <div id="ban-statut"></div>
+
+    <button class="carte-menu" onclick="demarrerFlux()">
+      <div class="carte-tag t-bleu" id="tag-qcm">DISPONIBLE</div>
+      <div class="carte-titre">Passer le QCM</div>
+      <div class="carte-desc" id="desc-qcm">Commencez le devoir chronometré selon votre serie.</div>
+    </button>
+
+    <button class="carte-menu" onclick="aller('p-resultats')">
+      <div class="carte-tag t-gris">RESULTATS</div>
+      <div class="carte-titre">Consulter ma note</div>
+      <div class="carte-desc">Entrez votre identifiant (ex: A442 ou C817) pour voir votre note.</div>
+    </button>
+
+    <div class="promo">
+      <div class="promo-titre">Classes Preparatoires</div>
+      <div class="promo-texte">Encadrement d'elite par M. Jaures Wilson MBOUMELA. Inscriptions ouvertes 2025-2026. Polytechnique, ENSP, ENAM, IRIC, Medecine, Droit et plus.</div>
+      <a class="lien-wa" href="https://wa.me/237655230364" target="_blank">WhatsApp / Appel : +237 655 230 364</a>
+    </div>
+
+    <div class="sep"></div>
+    <div style="font-size:12px;color:var(--discret);text-align:center;line-height:2">
+      Maths &nbsp;·&nbsp; Physique-Chimie &nbsp;·&nbsp; SVT &nbsp;·&nbsp; Francais<br>
+      Histoire-Geo &nbsp;·&nbsp; Philosophie &nbsp;·&nbsp; Concours Nationaux
+    </div>
+  </div>
+
+  <div class="pied"><strong>S.E. Corporation</strong> · Sapientia Effulgentia · Fondee en 2015<br>Directeur : Jaures Wilson MBOUMELA</div>
+</div>
+
+<!-- ══════════════════════════════════
+     FORMULAIRE INSCRIPTION
+══════════════════════════════════ -->
+<div class="page" id="p-formulaire">
+  <div class="barre">
+    <div>
+      <div class="barre-logo" style="font-size:14px">Inscription QCM</div>
+      <div class="barre-sous">Remplissez tous les champs</div>
+    </div>
+    <button class="barre-btn" onclick="aller('p-accueil')">Retour</button>
+  </div>
+  <div class="encart">
+    <div class="encart-titre">Vos informations</div>
+    <div class="encart-sous">Votre serie determine quelles questions vous recevez.</div>
+    <div class="motiv">
+      <b>Message du Directeur</b>
+      Ce QCM est une occasion en or ! Donnez le meilleur de vous-meme. Le Bac est a votre portee. — M. MBOUMELA
+    </div>
+    <div class="champ"><label class="etiquette">Nom complet *</label><input type="text" id="f-nom" placeholder="Ex: MBALLA Jean-Pierre" autocomplete="name"></div>
+    <div class="champ">
+      <label class="etiquette">Serie *</label>
+      <select id="f-serie">
+        <option value="">-- Choisir votre serie --</option>
+        <option value="A">Serie A — Lettres et Sciences Humaines</option>
+        <option value="C">Serie C — Maths et Sciences Physiques</option>
+        <option value="D">Serie D — Sciences et Technologie</option>
+        <option value="E">Serie E — Maths et Techniques</option>
+        <option value="F">Serie F — Sciences Industrielles</option>
+        <option value="G">Serie G — Sciences Economiques</option>
+        <option value="SES">Serie SES — Sc. Economiques et Sociales</option>
+        <option value="STT">Serie STT — Sc. et Technologies Tertiaires</option>
+        <option value="TI">Serie TI — Technologie de l'Information</option>
+      </select>
+    </div>
+    <div class="champ"><label class="etiquette">Etablissement *</label><input type="text" id="f-ecole" placeholder="Ex: Lycee de Makepe"></div>
+    <div class="champ"><label class="etiquette">Metier souhaite</label><input type="text" id="f-metier" placeholder="Ex: Ingenieur, Medecin, Juriste..."></div>
+    <div class="champ">
+      <label class="etiquette">Mention souhaitee au Bac</label>
+      <select id="f-mention">
+        <option value="">-- Choisir --</option>
+        <option>Passable (10-12)</option>
+        <option>Assez Bien (12-14)</option>
+        <option>Bien (14-16)</option>
+        <option>Tres Bien (16+)</option>
+      </select>
+    </div>
+    <div class="erreur" id="err-champs">Remplissez tous les champs obligatoires (*)</div>
+    <div class="avertissement" id="err-serie">Aucun QCM charge pour cette serie. Contactez l'administrateur.</div>
+    <button class="btn btn-bleu" onclick="validerFormulaire()">Commencer le QCM</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════
+     QCM
+══════════════════════════════════ -->
+<div class="page" id="p-qcm">
+  <div class="qbarre">
+    <div class="chrono" id="chrono">--:--</div>
+    <div class="progression">
+      <div class="prog-txt" id="prog-texte">0 / 0 repondues</div>
+      <div class="prog-barre"><div class="prog-remplissage" id="prog-fill" style="width:0%"></div></div>
+    </div>
+    <div class="serie-etiquette" id="serie-chip">--</div>
+  </div>
+  <div class="alerte-rep" id="alerte-rep">
+    Vous devez repondre a TOUTES les questions avant de soumettre !
+  </div>
+  <div class="zone-questions" id="zone-qcm"></div>
+  <div class="zone-soumettre">
+    <button class="btn btn-or" id="btn-soumettre" onclick="tenterSoumission()" disabled>Soumettre le devoir</button>
+    <div class="indice-soumettre" id="indice-soumettre">Repondez a toutes les questions pour activer ce bouton</div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════
+     RESULTAT
+══════════════════════════════════ -->
+<div class="page" id="p-resultat">
+  <div class="barre">
+    <div>
+      <div class="barre-logo" style="font-size:14px">Resultat du QCM</div>
+      <div class="barre-sous">S.E. Corporation</div>
+    </div>
+  </div>
+  <div class="res-page">
+    <div style="font-size:13px;color:var(--discret);font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Identifiant — a retenir absolument !</div>
+    <div class="boite-id">
+      <div class="id-etiquette">Votre code de resultat</div>
+      <div class="id-valeur" id="res-id">----</div>
+      <div class="id-note">Utilisez ce code depuis l'accueil pour consulter votre note a tout moment</div>
+    </div>
+    <div class="anneau">
+      <div class="anneau-chiffre" id="res-brut">0/0</div>
+      <div class="anneau-label">reponses</div>
+    </div>
+    <div class="note-20" id="res-pts">-- / 20 pts</div>
+    <div id="res-mention"></div>
+    <div class="message-res" id="res-message"></div>
+    <div id="msg-fin-zone" style="display:none">
+      <div class="msg-fin-boite">
+        <div class="msg-fin-badge">⚠️ Message important</div>
+        <div class="msg-fin-texte" id="msg-fin-contenu"></div>
+      </div>
+    </div>
+    <button class="btn btn-bleu" onclick="aller('p-accueil')">Retour a l'accueil</button>
+    <div class="sep"></div>
+    <a class="lien-wa" href="https://wa.me/237655230364" target="_blank">Rejoindre S.E. Corporation — +237 655 230 364</a>
+  </div>
+  <div class="pied"><strong>S.E. Corporation</strong> · Directeur : Jaures Wilson MBOUMELA</div>
+</div>
+
+<!-- ══════════════════════════════════
+     CONSULTER NOTE
+══════════════════════════════════ -->
+<div class="page" id="p-resultats">
+  <div class="barre">
+    <div>
+      <div class="barre-logo" style="font-size:14px">Consulter ma note</div>
+      <div class="barre-sous">Entrez votre identifiant</div>
+    </div>
+    <button class="barre-btn" onclick="aller('p-accueil')">Retour</button>
+  </div>
+  <div class="encart">
+    <div class="encart-titre">Resultats</div>
+    <div class="encart-sous">Votre identifiant est un code comme <strong style="color:var(--or)">A442</strong> ou <strong style="color:var(--or)">ME546</strong></div>
+    <div class="section">
+      <div class="champ"><label class="etiquette">Votre identifiant</label>
+        <input type="text" id="lookup-id" placeholder="Ex: A442" style="text-transform:uppercase;letter-spacing:4px;text-align:center;font-size:26px;font-weight:900" maxlength="6">
+      </div>
+      <button class="btn btn-bleu" onclick="rechercherNote()">Rechercher</button>
+      <div id="lookup-resultat" style="margin-top:14px;display:none;background:var(--carte2);border-radius:12px;padding:20px;text-align:center"></div>
+    </div>
+    <div class="section">
+      <div class="section-titre">Classement general — Top 10</div>
+      <div id="top10"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════
+     ADMIN LOGIN
+══════════════════════════════════ -->
+<div class="page" id="p-login">
+  <div class="barre">
+    <div>
+      <div class="barre-logo" style="font-size:14px">Espace Admin</div>
+      <div class="barre-sous">Personnel S.E. Corporation uniquement</div>
+    </div>
+    <button class="barre-btn" onclick="aller('p-accueil')">Retour</button>
+  </div>
+  <div class="encart" style="max-width:380px">
+    <div class="encart-titre">Connexion</div>
+    <div class="encart-sous">Entrez le mot de passe administrateur.</div>
+    <div class="champ"><label class="etiquette">Mot de passe</label><input type="password" id="mdp-admin" placeholder="........" onkeydown="if(event.key==='Enter')connexionAdmin()"></div>
+    <button class="btn btn-bleu" onclick="connexionAdmin()">Connexion</button>
+    <div id="err-mdp" style="color:var(--rouge);font-size:16px;font-weight:800;text-align:center;margin-top:14px;display:none">Mot de passe incorrect.</div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════
+     ADMIN PANEL
+══════════════════════════════════ -->
+<div class="page" id="p-admin">
+  <div class="barre">
+    <div>
+      <div class="barre-logo" style="font-size:14px">Tableau de bord</div>
+      <div class="barre-sous">S.E. Corporation Admin</div>
+    </div>
+    <button class="barre-btn" onclick="aller('p-accueil')">Quitter</button>
+  </div>
+  <div class="encart">
+
+    <div class="stats-grille">
+      <div class="stat-carte"><div class="stat-n" id="st-nb">0</div><div class="stat-l">Eleves</div></div>
+      <div class="stat-carte"><div class="stat-n" id="st-moy">—</div><div class="stat-l">Moyenne</div></div>
+      <div class="stat-carte"><div class="stat-n" id="st-max">—</div><div class="stat-l">Meilleur</div></div>
+    </div>
+
+    <div class="section">
+      <div class="section-titre">Planning de l'epreuve</div>
+      <div class="champ"><label class="temps-label">Date de l'epreuve</label><input type="date" id="date-ep"></div>
+      <div class="grille-temps">
+        <div><div class="temps-label">Heure debut</div><input type="time" id="h-debut" value="08:00"></div>
+        <div><div class="temps-label">Heure fin</div><input type="time" id="h-fin" value="10:00"></div>
+      </div>
+      <button class="btn btn-bleu" onclick="enregistrerPlanning()">Enregistrer le planning</button>
+      <div id="msg-planning" style="font-size:14px;margin-top:10px;font-weight:700"></div>
+    </div>
+
+    <div class="section">
+      <div class="section-titre">QCM par serie</div>
+      <div style="font-size:12px;color:var(--discret);margin-bottom:14px;line-height:1.8">
+        Format JSON requis :<br>
+        <span class="info-json">{"questions":[{"question":"...","choices":["A","B"],"answers":[0],"points":1}]}</span><br>
+        Plusieurs reponses : <span class="info-json">"answers":[0,2]</span>
+      </div>
+      <div id="liste-series"></div>
+      <div class="duo" style="margin-top:14px">
+        <button class="btn btn-gris btn-petit" onclick="telechargerExemple()">Exemple JSON</button>
+        <button class="btn btn-rouge btn-petit" onclick="viderTousQCM()">Vider tout</button>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-titre">Resultats</div>
+      <div class="onglets" id="onglets-res"></div>
+      <div class="duo" style="margin-bottom:14px;flex-wrap:wrap;gap:8px">
+        <button class="btn btn-or btn-petit" onclick="exportPublic()">Export JSON public</button>
+        <button class="btn btn-gris btn-petit" onclick="exportComplet()">Export JSON complet</button>
+      </div>
+      <div class="tableau-wrap">
+        <table>
+          <thead><tr><th>Code</th><th>Nom</th><th>Serie</th><th>Note/20</th></tr></thead>
+          <tbody id="corps-tableau"></tbody>
+        </table>
+        <div id="tableau-vide" style="text-align:center;padding:20px;color:var(--discret);font-size:14px">Aucun resultat.</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-titre">Annonce d'ouverture (popup)</div>
+      <div class="toggle-ligne">
+        <button class="toggle" id="toggle-annonce" onclick="basculerAnnonce()"></button>
+        <span class="toggle-label" id="toggle-annonce-lbl">Annonce desactivee</span>
+      </div>
+      <div class="champ">
+        <label class="etiquette">Titre de l'annonce</label>
+        <input type="text" id="annonce-admin-titre" placeholder="Ex: Informations importantes BAC 2026">
+      </div>
+      <div class="champ">
+        <label class="etiquette">Message de l'annonce</label>
+        <textarea id="annonce-admin-msg" rows="5" placeholder="Saisissez le message qui sera affiche aux eleves a l'ouverture du site..."></textarea>
+      </div>
+      <div class="champ">
+        <label class="etiquette">Photo de l'annonce (optionnel)</label>
+        <input type="file" accept="image/*" id="annonce-admin-photo" onchange="previsualiserPhoto(event)" style="padding:10px">
+        <img id="annonce-apercu" class="annonce-apercu" src="" alt="Apercu">
+        <div id="annonce-photo-info" style="font-size:12px;color:var(--discret);margin-top:6px"></div>
+      </div>
+      <div class="duo">
+        <button class="btn btn-or btn-petit" onclick="sauvegarderAnnonce()">Enregistrer l'annonce</button>
+        <button class="btn btn-rouge btn-petit" onclick="supprimerPhotoAnnonce()">Retirer la photo</button>
+      </div>
+      <div id="msg-annonce" style="font-size:14px;margin-top:10px;font-weight:700"></div>
+    </div>
+
+    <div class="section">
+      <div class="section-titre">Message final (apres le score)</div>
+      <div class="champ">
+        <label class="etiquette">Message d'attention affiché après le résultat</label>
+        <textarea id="msg-fin-admin" rows="5" placeholder="Ex: Rappel : remettez votre copie a la sortie de la salle. Ne partagez pas vos reponses..."></textarea>
+      </div>
+      <button class="btn btn-bleu" onclick="sauvegarderMsgFin()">Enregistrer le message final</button>
+      <div id="msg-fin-statut" style="font-size:14px;margin-top:10px;font-weight:700"></div>
+    </div>
+
+    <div class="section">
+      <div class="section-titre">Actions</div>
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <button class="btn btn-gris" onclick="reinitTentatives()">Reinitialiser les tentatives</button>
+        <button class="btn btn-rouge" onclick="effacerResultats()">Effacer tous les resultats</button>
+      </div>
+    </div>
+
+    <a class="lien-wa" href="https://wa.me/237655230364" target="_blank">Support : +237 655 230 364</a>
+  </div>
+  <div class="pied"><strong>S.E. Corporation</strong> · Admin · M. Jaures Wilson MBOUMELA</div>
+</div>
+
+<!-- MODALS -->
+<div class="modal-fond" id="m-confirmer">
+  <div class="modal">
+    <h3>Soumettre le devoir ?</h3>
+    <p>Vous avez repondu a toutes les questions. Une fois soumis, vous ne pourrez plus modifier vos reponses.</p>
+    <div class="duo">
+      <button class="btn btn-or" onclick="soumettreFinal()">Confirmer</button>
+      <button class="btn btn-gris" onclick="fermerModal('m-confirmer')">Annuler</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-fond" id="m-temps">
+  <div class="modal">
+    <h3>Temps ecoule !</h3>
+    <p>L'epreuve est terminee. Votre devoir a ete soumis automatiquement. Les questions sans reponse comptent comme incorrectes.</p>
+    <button class="btn btn-or" onclick="fermerModal('m-temps')">Voir mon resultat</button>
+  </div>
+</div>
+
+<script>
+var MDP = 'sec2026admin';
+var SERIES = ['A','C','D','E','F','G','SES','STT','TI'];
+var resultats = JSON.parse(localStorage.getItem('sec4_res') || '[]');
+var qcmData = JSON.parse(localStorage.getItem('sec4_qcm') || '{}');
+var planning = JSON.parse(localStorage.getItem('sec4_plan') || '{"date":"","debut":"","fin":""}');
+var utilisateur = null, questions = [], reponses = {}, timerInt = null, tempsRestant = 0, ongletAdmin = 'ALL';
+
+function aller(id) {
+  document.querySelectorAll('.page').forEach(function(p) { p.classList.remove('actif'); });
+  document.getElementById(id).classList.add('actif');
+  window.scrollTo(0, 0);
+}
+function fermerModal(id) { document.getElementById(id).classList.remove('ouvert'); }
+function sauvegarder() { localStorage.setItem('sec4_res', JSON.stringify(resultats)); }
+function sauvegarderQCM() { localStorage.setItem('sec4_qcm', JSON.stringify(qcmData)); }
+function sauvegarderPlan() { localStorage.setItem('sec4_plan', JSON.stringify(planning)); }
+
+function getDevId() {
+  var d = localStorage.getItem('sec4_dev');
+  if (!d) { d = 'D' + Math.random().toString(36).substr(2, 8).toUpperCase(); localStorage.setItem('sec4_dev', d); }
+  return d;
+}
+
+function genUID(s) { return s.substring(0, 2).toUpperCase() + Math.floor(100 + Math.random() * 900); }
+
+function statutPlanning() {
+  if (!planning.date || !planning.debut || !planning.fin) return 'libre';
+  var maintenant = Date.now();
+  var debut = new Date(planning.date + 'T' + planning.debut).getTime();
+  var fin = new Date(planning.date + 'T' + planning.fin).getTime();
+  if (maintenant < debut) return 'avant';
+  if (maintenant > fin) return 'termine';
+  return 'ouvert';
+}
+
+function mettreAJourBanniere() {
+  var ban = document.getElementById('ban-statut');
+  var tag = document.getElementById('tag-qcm');
+  var desc = document.getElementById('desc-qcm');
+  var st = statutPlanning();
+  ban.innerHTML = '';
+  if (st === 'libre') {
+    tag.textContent = 'DISPONIBLE'; tag.style.background = 'var(--bleu)'; tag.style.color = '#fff';
+    desc.textContent = 'Commencez le devoir chronometré selon votre serie.';
+  } else if (st === 'ouvert') {
+    ban.innerHTML = '<div class="statut s-ouvert">Epreuve en cours — Fermeture a ' + planning.fin + '</div>';
+    tag.textContent = 'EN COURS'; tag.style.background = 'var(--vert)'; tag.style.color = '#000';
+    desc.textContent = 'QCM ouvert jusqu\'a ' + planning.fin + '. Commencez maintenant !';
+  } else if (st === 'avant') {
+    ban.innerHTML = '<div class="statut s-bientot">Epreuve prevue a ' + planning.debut + ' le ' + planning.date + '</div>';
+    tag.textContent = 'PAS ENCORE OUVERT'; tag.style.background = '#444'; tag.style.color = '#aaa';
+    desc.textContent = 'Le QCM ouvrira a ' + planning.debut + '. Revenez a cette heure.';
+  } else {
+    ban.innerHTML = '<div class="statut s-ferme">Epreuve terminee — QCM ferme</div>';
+    tag.textContent = 'FERME'; tag.style.background = 'var(--rouge)'; tag.style.color = '#fff';
+    desc.textContent = 'Cette epreuve est terminee. Consultez vos resultats.';
+  }
+}
+setInterval(mettreAJourBanniere, 8000);
+mettreAJourBanniere();
+
+function demarrerFlux() {
+  var st = statutPlanning();
+  if (st === 'avant') { alert('Le QCM n\'est pas encore ouvert.\nIl ouvrira le ' + planning.date + ' a ' + planning.debut + '.'); return; }
+  if (st === 'termine') { alert('Cette epreuve est terminee.'); return; }
+  var dev = getDevId();
+  if (localStorage.getItem('sec4_done_' + dev)) {
+    var r = resultats.find(function(x) { return x.deviceId === dev; });
+    if (r) alert('Vous avez deja soumis ce devoir.\nIdentifiant : ' + r.uid + '\nNote : ' + r.pts20.toFixed(1) + '/20');
+    return;
+  }
+  aller('p-formulaire');
+}
+
+function validerFormulaire() {
+  var nom = document.getElementById('f-nom').value.trim();
+  var serie = document.getElementById('f-serie').value;
+  var ecole = document.getElementById('f-ecole').value.trim();
+  document.getElementById('err-champs').style.display = 'none';
+  document.getElementById('err-serie').style.display = 'none';
+  if (!nom || !serie || !ecole) { document.getElementById('err-champs').style.display = 'block'; return; }
+  var qs = null;
+  if (qcmData[serie] && qcmData[serie].questions && qcmData[serie].questions.length) {
+    qs = qcmData[serie].questions;
+  } else if (Object.keys(qcmData).length === 0) {
+    qs = questionsDemo();
+  } else {
+    document.getElementById('err-serie').style.display = 'block'; return;
+  }
+  questions = qs;
+  utilisateur = { nom: nom, serie: serie, ecole: ecole, metier: document.getElementById('f-metier').value, mention: document.getElementById('f-mention').value, uid: genUID(serie), deviceId: getDevId(), date: new Date().toLocaleString('fr-FR') };
+  reponses = {};
+  document.getElementById('serie-chip').textContent = 'Serie ' + serie;
+  afficherQCM();
+  aller('p-qcm');
+  lancerChrono();
+}
+
+function questionsDemo() {
+  return [
+    { question: "Quel est le resultat de 2 x 2 x 2 x 5 ?", choices: ["20", "40", "80", "25"], answers: [1], points: 1 },
+    { question: "Formule chimique de l'eau ?", choices: ["H2O2", "HO", "H2O", "H3O"], answers: [2], points: 1 },
+    { question: "Capitale du Cameroun ?", choices: ["Douala", "Bafoussam", "Garoua", "Yaounde"], answers: [3], points: 1 },
+    { question: "Annee d'independance du Cameroun ?", choices: ["1958", "1960", "1962", "1972"], answers: [1], points: 1 },
+    { question: "La photosynthese produit quel gaz ?", choices: ["CO2", "N2", "O2", "H2"], answers: [2], points: 1 },
+    { question: "Theoreme a2 + b2 = c2 ?", choices: ["Thales", "Pythagore", "Euclide", "Fermat"], answers: [1], points: 1 },
+    { question: "Combien de regions au Cameroun ?", choices: ["8", "10", "12", "14"], answers: [1], points: 1 },
+    { question: "Vitesse de la lumiere (approximation) ?", choices: ["200 000 km/s", "300 000 km/s", "400 000 km/s", "150 000 km/s"], answers: [1], points: 1 },
+    { question: "Selectionnez les continents Afrique et Europe (2 reponses)", choices: ["Afrique", "Asie", "Europe", "Oceanie"], answers: [0, 2], points: 2 },
+    { question: "Parmi ces couleurs, les primaires sont (3 reponses) :", choices: ["Rouge", "Orange", "Bleu", "Violet", "Jaune"], answers: [0, 2, 4], points: 3 }
+  ];
+}
+
+function afficherQCM() {
+  var body = document.getElementById('zone-qcm');
+  body.innerHTML = '';
+  var L = ['A', 'B', 'C', 'D', 'E', 'F', 'G'];
+  questions.forEach(function(q, i) {
+    var multi = q.answers.length > 1;
+    var sel = reponses[i] || [];
+    var html = '<div class="question-boite" id="qb-' + i + '">';
+    html += '<div class="q-numero">Question ' + (i + 1) + ' sur ' + questions.length + '</div>';
+    if (multi) html += '<div class="q-badge-multi">Plusieurs reponses — ' + q.answers.length + ' attendues</div>';
+    html += '<div class="q-texte">' + q.question + '</div><div class="choix-liste">';
+    q.choices.forEach(function(c, j) {
+      html += '<div class="choix ' + (sel.indexOf(j) > -1 ? 'choisi' : '') + '" onclick="choisir(' + i + ',' + j + ',' + (multi ? 'true' : 'false') + ')" id="ch-' + i + '-' + j + '">';
+      html += '<div class="choix-lettre" id="cl-' + i + '-' + j + '">' + L[j] + '</div><span>' + c + '</span></div>';
+    });
+    html += '</div></div>';
+    body.innerHTML += html;
+  });
+  actualiserProgression();
+}
+
+function choisir(qi, ci, multi) {
+  if (!reponses[qi]) reponses[qi] = [];
+  if (multi) {
+    var x = reponses[qi].indexOf(ci);
+    if (x > -1) reponses[qi].splice(x, 1); else reponses[qi].push(ci);
+  } else {
+    reponses[qi] = [ci];
+  }
+  questions[qi].choices.forEach(function(_, j) {
+    var ch = document.getElementById('ch-' + qi + '-' + j);
+    var cl = document.getElementById('cl-' + qi + '-' + j);
+    if (ch) {
+      var selectionne = reponses[qi].indexOf(j) > -1;
+      ch.classList.toggle('choisi', selectionne);
+      if (cl) { cl.style.background = selectionne ? 'var(--bleu)' : ''; cl.style.borderColor = selectionne ? 'var(--bleu)' : ''; cl.style.color = selectionne ? '#fff' : ''; }
+    }
+  });
+  actualiserProgression();
+}
+
+function actualiserProgression() {
+  var faites = Object.keys(reponses).filter(function(k) { return reponses[k].length > 0; }).length;
+  var total = questions.length;
+  document.getElementById('prog-texte').textContent = faites + ' / ' + total + ' repondues';
+  document.getElementById('prog-fill').style.width = (faites / total * 100) + '%';
+  var tout = faites >= total;
+  document.getElementById('btn-soumettre').disabled = !tout;
+  document.getElementById('indice-soumettre').style.display = tout ? 'none' : 'block';
+  document.getElementById('alerte-rep').classList.toggle('visible', !tout && faites > 0);
+}
+
+function calcTemps() {
+  if (!planning.fin || !planning.date) return tempsRestant;
+  var fin = new Date(planning.date + 'T' + planning.fin).getTime();
+  return Math.max(0, Math.floor((fin - Date.now()) / 1000));
+}
+
+function lancerChrono() {
+  clearInterval(timerInt);
+  tempsRestant = (planning.fin && planning.date) ? calcTemps() : 1800;
+  afficherChrono();
+  timerInt = setInterval(function() {
+    tempsRestant = (planning.fin && planning.date) ? calcTemps() : Math.max(0, tempsRestant - 1);
+    afficherChrono();
+    if (tempsRestant <= 0) { clearInterval(timerInt); soumissionAuto(); }
+  }, 1000);
+}
+
+function afficherChrono() {
+  var m = String(Math.floor(tempsRestant / 60)).padStart(2, '0');
+  var s = String(tempsRestant % 60).padStart(2, '0');
+  var el = document.getElementById('chrono');
+  if (el) { el.textContent = m + ':' + s; el.classList.toggle('urgent', tempsRestant <= 120); }
+}
+
+function soumissionAuto() { document.getElementById('m-temps').classList.add('ouvert'); calculerEtAfficher(); }
+function tenterSoumission() {
+  var faites = Object.keys(reponses).filter(function(k) { return reponses[k].length > 0; }).length;
+  if (faites < questions.length) { document.getElementById('alerte-rep').classList.add('visible'); document.getElementById('alerte-rep').scrollIntoView({ behavior: 'smooth' }); return; }
+  document.getElementById('m-confirmer').classList.add('ouvert');
+}
+function soumettreFinal() { fermerModal('m-confirmer'); calculerEtAfficher(); }
+
+function calculerEtAfficher() {
+  clearInterval(timerInt);
+  var totalPoss = 0, totalTrouve = 0;
+  questions.forEach(function(q, i) {
+    var correct = q.answers || [0];
+    var donne = reponses[i] || [];
+    totalPoss += correct.length;
+    totalTrouve += donne.filter(function(a) { return correct.indexOf(a) > -1; }).length;
+  });
+  var pts20 = totalPoss > 0 ? (totalTrouve / totalPoss) * 20 : 0;
+  pts20 = Math.round(pts20 * 10) / 10;
+  var entree = Object.assign({}, utilisateur, { totalTrouve: totalTrouve, totalPoss: totalPoss, pts20: pts20, date: new Date().toLocaleString('fr-FR') });
+  resultats.push(entree);
+  sauvegarder();
+  localStorage.setItem('sec4_done_' + utilisateur.deviceId, '1');
+  document.getElementById('res-id').textContent = utilisateur.uid;
+  document.getElementById('res-brut').textContent = totalTrouve + '/' + totalPoss;
+  document.getElementById('res-pts').textContent = pts20.toFixed(1) + ' / 20 pts';
+  var mc = '', mm = '', mCls = '';
+  if (pts20 >= 16) { mc = 'Tres Bien'; mm = 'Performance exceptionnelle ! Vous etes pret(e) pour le Bac. Continuez sur cette lancee !'; mCls = 'm-vert'; }
+  else if (pts20 >= 14) { mc = 'Bien'; mm = 'Tres bon resultat ! Quelques revisions vous meneront a l\'excellence.'; mCls = 'm-bleu'; }
+  else if (pts20 >= 10) { mc = 'Passable'; mm = 'Bon courage ! Revoyez les chapitres cles et rejoignez nos cours de soutien S.E. Corporation.'; mCls = 'm-or'; }
+  else { mc = 'A ameliorer'; mm = 'Ne vous decouragez pas ! Les classes preparatoires S.E. Corporation sont la pour vous aider.'; mCls = 'm-rouge'; }
+  document.getElementById('res-mention').innerHTML = '<div class="mention ' + mCls + '">' + mc + '</div>';
+  document.getElementById('res-message').textContent = mm;
+  aller('p-resultat');
+}
+
+function rechercherNote() {
+  var id = document.getElementById('lookup-id').value.trim().toUpperCase();
+  var r = resultats.find(function(x) { return x.uid === id; });
+  var box = document.getElementById('lookup-resultat');
+  box.style.display = 'block';
+  if (r) {
+    box.innerHTML = '<div style="font-size:34px;font-weight:900;color:var(--or);margin-bottom:8px">' + r.pts20.toFixed(1) + ' / 20</div><div style="font-size:14px;color:var(--discret)">Serie ' + r.serie + ' — ' + r.ecole + '</div>';
+  } else {
+    box.innerHTML = '<div style="font-size:15px;font-weight:800;color:var(--rouge)">Identifiant "' + id + '" introuvable.</div>';
+  }
+  afficherTop10();
+}
+
+function afficherTop10() {
+  var tries = resultats.slice().sort(function(a, b) { return b.pts20 - a.pts20; }).slice(0, 10);
+  var el = document.getElementById('top10');
+  if (!tries.length) { el.innerHTML = '<div style="color:var(--discret);font-size:14px;padding:12px;text-align:center">Aucun resultat pour l\'instant.</div>'; return; }
+  el.innerHTML = tries.map(function(r, i) {
+    var couleur = r.pts20 >= 16 ? 'var(--vert)' : r.pts20 >= 10 ? 'var(--or)' : 'var(--rouge)';
+    return '<div class="rang-ligne"><span class="rang-num">#' + (i + 1) + '</span><span class="rang-id">' + r.uid + '</span><span class="rang-serie">Serie ' + r.serie + '</span><span class="rang-note" style="color:' + couleur + '">' + r.pts20.toFixed(1) + '</span></div>';
+  }).join('');
+}
+
+function connexionAdmin() {
+  if (document.getElementById('mdp-admin').value === MDP) {
+    document.getElementById('err-mdp').style.display = 'none';
+    afficherAdmin();
+    aller('p-admin');
+  } else {
+    document.getElementById('err-mdp').style.display = 'block';
+  }
+}
+
+function afficherAdmin() {
+  var n = resultats.length;
+  document.getElementById('st-nb').textContent = n;
+  if (n) {
+    var moy = resultats.reduce(function(s, r) { return s + r.pts20; }, 0) / n;
+    var max = Math.max.apply(null, resultats.map(function(r) { return r.pts20; }));
+    document.getElementById('st-moy').textContent = moy.toFixed(1);
+    document.getElementById('st-max').textContent = max.toFixed(1);
+  } else {
+    document.getElementById('st-moy').textContent = '—';
+    document.getElementById('st-max').textContent = '—';
+  }
+  if (planning.date) document.getElementById('date-ep').value = planning.date;
+  if (planning.debut) document.getElementById('h-debut').value = planning.debut;
+  if (planning.fin) document.getElementById('h-fin').value = planning.fin;
+  afficherListeSeries();
+  afficherOnglets();
+  afficherTableau(ongletAdmin);
+}
+
+function afficherListeSeries() {
+  document.getElementById('liste-series').innerHTML = SERIES.map(function(s) {
+    return '<div class="serie-ligne"><div class="sl-nom">Serie ' + s + '</div><div class="sl-statut ' + (qcmData[s] ? 'sl-ok' : 'sl-non') + '">' + (qcmData[s] ? qcmData[s].questions.length + ' questions' : 'Aucun QCM') + '</div><div style="margin-left:auto;display:flex;gap:8px"><input type="file" accept=".json" id="up-' + s + '" style="display:none" onchange="chargerJSON(event,\'' + s + '\')"><button class="btn btn-bleu btn-petit" style="padding:9px 14px;font-size:14px" onclick="document.getElementById(\'up-' + s + '\').click()">Charger</button>' + (qcmData[s] ? '<button class="btn btn-rouge btn-petit" style="padding:9px 12px;font-size:14px" onclick="supprimerSerie(\'' + s + '\')">X</button>' : '') + '</div></div>';
+  }).join('');
+}
+
+function chargerJSON(e, s) {
+  var f = e.target.files[0]; if (!f) return;
+  var r = new FileReader();
+  r.onload = function(ev) {
+    try {
+      var d = JSON.parse(ev.target.result);
+      if (!d.questions) throw new Error('"questions" manquant');
+      d.questions = d.questions.map(function(q) {
+        if (!q.answers) q.answers = [q.answer !== undefined ? q.answer : 0];
+        if (!q.points) q.points = q.answers.length;
+        return q;
+      });
+      qcmData[s] = d;
+      sauvegarderQCM();
+      afficherListeSeries();
+      alert(d.questions.length + ' questions chargees pour la Serie ' + s + ' !');
+    } catch (err) { alert('Erreur JSON : ' + err.message); }
+  };
+  r.readAsText(f);
+  e.target.value = '';
+}
+
+function supprimerSerie(s) {
+  if (confirm('Supprimer le QCM de la Serie ' + s + ' ?')) { delete qcmData[s]; sauvegarderQCM(); afficherListeSeries(); }
+}
+
+function viderTousQCM() {
+  if (confirm('Vider tous les QCM ?')) { qcmData = {}; sauvegarderQCM(); afficherListeSeries(); }
+}
+
+function enregistrerPlanning() {
+  planning.date = document.getElementById('date-ep').value;
+  planning.debut = document.getElementById('h-debut').value;
+  planning.fin = document.getElementById('h-fin').value;
+  if (!planning.date || !planning.debut || !planning.fin) { document.getElementById('msg-planning').innerHTML = '<span style="color:var(--rouge)">Remplissez tous les champs.</span>'; return; }
+  sauvegarderPlan();
+  mettreAJourBanniere();
+  document.getElementById('msg-planning').innerHTML = '<span style="color:var(--vert)">Planning enregistre !</span>';
+}
+
+function afficherOnglets() {
+  var series = Array.from(new Set(resultats.map(function(r) { return r.serie; })));
+  var tabs = ['ALL'].concat(series);
+  document.getElementById('onglets-res').innerHTML = tabs.map(function(t) {
+    return '<div class="onglet ' + (t === ongletAdmin ? 'actif' : '') + '" onclick="changerOnglet(\'' + t + '\')">' + (t === 'ALL' ? 'Toutes' : t) + '</div>';
+  }).join('');
+}
+
+function changerOnglet(t) { ongletAdmin = t; afficherOnglets(); afficherTableau(t); }
+
+function afficherTableau(serie) {
+  var filtre = serie === 'ALL' ? resultats : resultats.filter(function(r) { return r.serie === serie; });
+  var tries = filtre.slice().sort(function(a, b) { return b.pts20 - a.pts20; });
+  var corps = document.getElementById('corps-tableau');
+  var vide = document.getElementById('tableau-vide');
+  if (!tries.length) { corps.innerHTML = ''; vide.style.display = 'block'; return; }
+  vide.style.display = 'none';
+  corps.innerHTML = tries.map(function(r) {
+    var c = r.pts20 >= 16 ? 'var(--vert)' : r.pts20 >= 10 ? 'var(--or)' : 'var(--rouge)';
+    return '<tr><td class="code-style">' + r.uid + '</td><td style="font-size:13px;max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + r.nom + '</td><td style="font-size:13px">' + r.serie + '</td><td style="font-size:18px;font-weight:900;color:' + c + '">' + r.pts20.toFixed(1) + '</td></tr>';
+  }).join('');
+}
+
+function exportPublic() {
+  var serie = ongletAdmin === 'ALL' ? null : ongletAdmin;
+  var filtre = serie ? resultats.filter(function(r) { return r.serie === serie; }) : resultats;
+  var groupes = {};
+  filtre.slice().sort(function(a, b) { return b.pts20 - a.pts20; }).forEach(function(r) {
+    if (!groupes[r.serie]) groupes[r.serie] = [];
+    groupes[r.serie].push({ identifiant: r.uid, serie: r.serie, note_sur_20: r.pts20.toFixed(1) });
+  });
+  telecharger(JSON.stringify({ date: new Date().toLocaleString('fr-FR'), total: filtre.length, resultats_par_serie: groupes }, null, 2), 'SEC_resultats_publics.json');
+}
+
+function exportComplet() {
+  var serie = ongletAdmin === 'ALL' ? null : ongletAdmin;
+  var filtre = serie ? resultats.filter(function(r) { return r.serie === serie; }) : resultats;
+  telecharger(JSON.stringify({ date: new Date().toLocaleString('fr-FR'), resultats: filtre.slice().sort(function(a, b) { return b.pts20 - a.pts20; }) }, null, 2), 'SEC_resultats_complets.json');
+}
+
+function telecharger(contenu, nom) {
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([contenu], { type: 'application/json' }));
+  a.download = nom; a.click();
+}
+
+function telechargerExemple() {
+  telecharger(JSON.stringify({ questions: [
+    { question: "Quel est l'element chimique de symbole O ?", choices: ["Osmium", "Oxygene", "Or", "Ozone"], answers: [1], points: 1 },
+    { question: "Quel est le resultat de 3x3 + 4x4 ?", choices: ["25", "20", "16", "49"], answers: [0], points: 1 },
+    { question: "Selectionnez les nombres premiers parmi 2, 4, 7, 9, 11", choices: ["2", "4", "7", "9", "11"], answers: [0, 2, 4], points: 3 }
+  ]}, null, 2), 'SEC_exemple_qcm.json');
+}
+
+function reinitTentatives() {
+  if (confirm('Reinitialiser les tentatives ? Les eleves pourront repasser.')) {
+    Object.keys(localStorage).filter(function(k) { return k.startsWith('sec4_done_'); }).forEach(function(k) { localStorage.removeItem(k); });
+    alert('Tentatives reinitialisees.');
+  }
+}
+
+function effacerResultats() {
+  if (confirm('Effacer TOUS les resultats ? Irreversible !')) { resultats = []; sauvegarder(); afficherAdmin(); }
+}
+
+/* ═══════════════ ANNONCE & MESSAGE FINAL ═══════════════ */
+var annonceData = JSON.parse(localStorage.getItem('sec4_annonce') || '{"active":false,"titre":"","message":"","photo":""}');
+var msgFin = localStorage.getItem('sec4_msg_fin') || '';
+
+function sauvegarderAnnonceData() { localStorage.setItem('sec4_annonce', JSON.stringify(annonceData)); }
+
+function afficherPopupAnnonce() {
+  if (!annonceData.active || (!annonceData.message && !annonceData.photo)) return;
+  document.getElementById('annonce-titre').textContent = annonceData.titre || 'Annonce de S.E. Corporation';
+  document.getElementById('annonce-msg').textContent = annonceData.message || '';
+  var img = document.getElementById('annonce-img');
+  if (annonceData.photo) { img.src = annonceData.photo; img.style.display = 'block'; }
+  else { img.style.display = 'none'; }
+  document.getElementById('popup-annonce').classList.add('ouvert');
+}
+
+function fermerAnnonce() { document.getElementById('popup-annonce').classList.remove('ouvert'); }
+
+function afficherMsgFin() {
+  var zone = document.getElementById('msg-fin-zone');
+  var contenu = document.getElementById('msg-fin-contenu');
+  var m = localStorage.getItem('sec4_msg_fin') || '';
+  if (m && m.trim()) {
+    contenu.textContent = m;
+    zone.style.display = 'block';
+  } else { zone.style.display = 'none'; }
+}
+
+/* ADMIN ANNONCE */
+function basculerAnnonce() {
+  annonceData.active = !annonceData.active;
+  var btn = document.getElementById('toggle-annonce');
+  var lbl = document.getElementById('toggle-annonce-lbl');
+  btn.classList.toggle('on', annonceData.active);
+  lbl.textContent = annonceData.active ? 'Annonce activee' : 'Annonce desactivee';
+  sauvegarderAnnonceData();
+}
+
+function previsualiserPhoto(e) {
+  var f = e.target.files[0]; if (!f) return;
+  var r = new FileReader();
+  r.onload = function(ev) {
+    var ap = document.getElementById('annonce-apercu');
+    ap.src = ev.target.result; ap.style.display = 'block';
+    document.getElementById('annonce-photo-info').textContent = 'Photo : ' + f.name + ' (' + Math.round(ev.target.result.length / 1024) + ' Ko)';
+    annonceData.photo = ev.target.result;
+  };
+  r.readAsDataURL(f);
+}
+
+function supprimerPhotoAnnonce() {
+  annonceData.photo = '';
+  document.getElementById('annonce-apercu').style.display = 'none';
+  document.getElementById('annonce-apercu').src = '';
+  document.getElementById('annonce-photo-info').textContent = 'Photo retiree.';
+  document.getElementById('annonce-admin-photo').value = '';
+  sauvegarderAnnonceData();
+}
+
+function sauvegarderAnnonce() {
+  annonceData.titre = document.getElementById('annonce-admin-titre').value.trim() || 'Annonce de S.E. Corporation';
+  annonceData.message = document.getElementById('annonce-admin-msg').value.trim();
+  sauvegarderAnnonceData();
+  document.getElementById('msg-annonce').innerHTML = '<span style="color:var(--vert)">Annonce enregistree avec succes !</span>';
+  setTimeout(function() { document.getElementById('msg-annonce').innerHTML = ''; }, 3000);
+}
+
+function sauvegarderMsgFin() {
+  var val = document.getElementById('msg-fin-admin').value.trim();
+  localStorage.setItem('sec4_msg_fin', val);
+  document.getElementById('msg-fin-statut').innerHTML = '<span style="color:var(--vert)">Message final enregistre !</span>';
+  setTimeout(function() { document.getElementById('msg-fin-statut').innerHTML = ''; }, 3000);
+}
+
+function chargerAdminAnnonce() {
+  document.getElementById('annonce-admin-titre').value = annonceData.titre || '';
+  document.getElementById('annonce-admin-msg').value = annonceData.message || '';
+  document.getElementById('msg-fin-admin').value = localStorage.getItem('sec4_msg_fin') || '';
+  var btn = document.getElementById('toggle-annonce');
+  var lbl = document.getElementById('toggle-annonce-lbl');
+  btn.classList.toggle('on', annonceData.active);
+  lbl.textContent = annonceData.active ? 'Annonce activee' : 'Annonce desactivee';
+  if (annonceData.photo) {
+    var ap = document.getElementById('annonce-apercu');
+    ap.src = annonceData.photo; ap.style.display = 'block';
+    document.getElementById('annonce-photo-info').textContent = 'Photo enregistree en memoire.';
+  }
+}
+
+/* APPELER chargerAdminAnnonce depuis afficherAdmin */
+var _origAfficherAdmin = afficherAdmin;
+afficherAdmin = function() { _origAfficherAdmin(); chargerAdminAnnonce(); };
+
+/* AFFICHER MSG FIN depuis calculerEtAfficher */
+var _origCalc = calculerEtAfficher;
+calculerEtAfficher = function() { _origCalc(); afficherMsgFin(); };
+
+/* LANCEMENT AU DEMARRAGE */
+window.addEventListener('load', function() { afficherPopupAnnonce(); });
+
+afficherTop10();
+</script>
+</body>
+</html>
