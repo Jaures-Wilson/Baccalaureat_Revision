@@ -270,6 +270,24 @@ textarea{display:block;width:100%;background:var(--carte2);border:1.5px solid va
 .firebase-erreur h2{color:var(--rouge);font-size:20px;margin-bottom:14px}
 .firebase-erreur p{color:var(--discret);font-size:14px;line-height:1.7;margin-bottom:12px;max-width:420px}
 .firebase-erreur code{background:var(--carte2);padding:3px 8px;border-radius:6px;font-family:monospace;font-size:13px;color:var(--or)}
+
+/* ──── OVERLAY SUPPRESSION ELEVE ──── */
+.overlay-supp{display:none;position:fixed;inset:0;background:rgba(15,17,23,.97);z-index:9999;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center}
+.overlay-supp.visible{display:flex}
+.overlay-supp-badge{background:var(--rouge);color:#fff;border-radius:10px;padding:8px 20px;font-size:13px;font-weight:900;text-transform:uppercase;letter-spacing:1px;margin-bottom:18px}
+.overlay-supp-titre{font-size:22px;font-weight:900;color:#fff;margin-bottom:14px;max-width:380px;line-height:1.4}
+.overlay-supp-raison{background:var(--carte);border:1.5px solid rgba(224,53,53,.4);border-radius:12px;padding:16px;font-size:15px;color:#d0c8c8;line-height:1.7;margin-bottom:20px;max-width:380px;width:100%}
+/* ──── PARTICIPANTS ADMIN ──── */
+.participant-carte{background:var(--carte2);border:1px solid var(--ligne);border-radius:12px;padding:14px;margin-bottom:10px}
+.pc-header{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:8px;flex-wrap:wrap}
+.pc-nom{font-size:16px;font-weight:800;color:#fff}
+.pc-elv{font-size:12px;font-family:monospace;color:var(--or);font-weight:700;margin-top:2px}
+.pc-infos{font-size:13px;color:var(--discret);line-height:1.8;margin-bottom:8px}
+.pc-statut{display:inline-block;border-radius:20px;padding:4px 14px;font-size:12px;font-weight:700}
+.pc-en-cours{background:rgba(58,114,240,.15);color:var(--bleu2)}
+.pc-soumis{background:rgba(34,197,94,.15);color:var(--vert)}
+.pc-supprime{background:rgba(224,53,53,.15);color:var(--rouge)}
+.pc-deconnecte{background:rgba(245,158,11,.12);color:var(--orange)}
 </style>
 
 <!-- Firebase SDK v9 compat -->
@@ -297,6 +315,19 @@ textarea{display:block;width:100%;background:var(--carte2);border:1.5px solid va
   <h2>Configuration Firebase requise</h2>
   <p>La base de donnees n'est pas configuree. Ouvrez <code>index.html</code>, trouvez la section <code>FIREBASE_CONFIG</code> et remplissez vos valeurs Firebase.</p>
   <p>Consultez le guide fourni pour les instructions.</p>
+</div>
+
+<!-- OVERLAY SUPPRESSION ELEVE -->
+<div class="overlay-supp" id="overlay-supp">
+  <div class="overlay-supp-badge">Devoir supprime</div>
+  <div class="overlay-supp-titre">L'administrateur a supprime votre devoir.</div>
+  <div class="overlay-supp-raison" id="overlay-supp-raison">Raison : --</div>
+  <p style="font-size:14px;color:var(--discret);max-width:340px;line-height:1.8;margin-bottom:20px;text-align:center">Vous pouvez retenter de participer en remplissant a nouveau le formulaire.</p>
+  <div style="display:flex;flex-direction:column;gap:12px;width:100%;max-width:320px;margin-bottom:20px">
+    <button class="btn btn-bleu" onclick="retenteApresSupp()">Retenter de participer</button>
+    <button class="btn btn-gris" onclick="quitterApresSupp()">Retour a l'accueil</button>
+  </div>
+  <a class="lien-wa" href="https://wa.me/237655230364" target="_blank" style="max-width:320px;width:100%">Contacter l'administrateur : +237 655 230 364</a>
 </div>
 
 <!-- POPUP ANNONCE -->
@@ -453,6 +484,13 @@ textarea{display:block;width:100%;background:var(--carte2);border:1.5px solid va
       <div class="id-valeur" id="res-id">----</div>
       <div class="id-note">Utilisez ce code depuis l'accueil pour consulter votre note a tout moment</div>
     </div>
+    <div id="confirmation-box" style="display:none;background:rgba(34,197,94,.1);border:2px solid rgba(34,197,94,.35);border-radius:14px;padding:18px;margin-bottom:16px;text-align:left">
+      <div style="font-size:12px;font-weight:900;text-transform:uppercase;letter-spacing:.5px;color:var(--vert);margin-bottom:10px;text-align:center">Devoir enregistre avec succes</div>
+      <div id="conf-details" style="font-size:13px;color:#a0d8b0;line-height:2.2"></div>
+    </div>
+    <div id="res-save-warning" style="display:none;background:rgba(245,158,11,.12);border:2px solid var(--orange);border-radius:12px;padding:14px;font-size:14px;font-weight:700;color:var(--orange);margin-bottom:16px;text-align:center">
+      Attention : enregistrement non confirme. Notez votre code et contactez l'administrateur : +237 655 230 364
+    </div>
     <div class="anneau">
       <div class="anneau-chiffre" id="res-brut">0/0</div>
       <div class="anneau-label">reponses</div>
@@ -544,8 +582,9 @@ textarea{display:block;width:100%;background:var(--carte2);border:1.5px solid va
   </div>
   <div class="encart">
 
-    <div class="stats-grille">
-      <div class="stat-carte"><div class="stat-n" id="st-nb">0</div><div class="stat-l">Eleves</div></div>
+    <div class="stats-grille" style="grid-template-columns:repeat(2,1fr)">
+      <div class="stat-carte"><div class="stat-n" id="st-nb">0</div><div class="stat-l">Soumissions</div></div>
+      <div class="stat-carte"><div class="stat-n" id="st-part">0</div><div class="stat-l">Participants</div></div>
       <div class="stat-carte"><div class="stat-n" id="st-moy">-</div><div class="stat-l">Moyenne</div></div>
       <div class="stat-carte"><div class="stat-n" id="st-max">-</div><div class="stat-l">Meilleur</div></div>
     </div>
@@ -629,6 +668,12 @@ textarea{display:block;width:100%;background:var(--carte2);border:1.5px solid va
     </div>
 
     <div class="section">
+      <div class="section-titre">Participants ayant commence l'epreuve</div>
+      <div id="nb-participants" style="font-size:13px;color:var(--discret);margin-bottom:14px">Chargement...</div>
+      <div id="liste-participants"></div>
+    </div>
+
+    <div class="section">
       <div class="section-titre">Actions et reinitialisation</div>
       <div style="display:flex;flex-direction:column;gap:12px">
         <div style="background:rgba(58,114,240,.1);border:1.5px solid rgba(58,114,240,.3);border-radius:12px;padding:14px;font-size:13px;color:#8ab0e8;line-height:1.7">
@@ -663,6 +708,36 @@ textarea{display:block;width:100%;background:var(--carte2);border:1.5px solid va
     <h3>Temps ecoule !</h3>
     <p>L'epreuve est terminee. Votre devoir a ete soumis automatiquement. Les questions sans reponse comptent comme incorrectes.</p>
     <button class="btn btn-or" onclick="fermerModal('m-temps')">Voir mon resultat</button>
+  </div>
+</div>
+
+<div class="modal-fond" id="m-suppression">
+  <div class="modal">
+    <h3>Supprimer ce devoir</h3>
+    <p id="m-supp-info" style="font-size:14px;color:var(--discret);margin-bottom:14px;font-weight:700"></p>
+    <div class="champ">
+      <label class="etiquette">Raison de la suppression</label>
+      <select id="supp-raison-select" onchange="majChampsSupp()">
+        <option value="">-- Choisir une raison --</option>
+        <option>Vous avez utilise un faux nom</option>
+        <option>Vous avez utilise des emojis dans votre nom</option>
+        <option>Vous avez mal renseigne votre ecole</option>
+        <option>Vous avez mal renseigne votre classe</option>
+        <option>Vous avez utilise une abreviation interdite</option>
+        <option>Vos informations sont incoherentes</option>
+        <option>Votre identite n'a pas pu etre validee</option>
+        <option value="autre">Autre raison</option>
+      </select>
+    </div>
+    <div class="champ" id="champ-raison-perso" style="display:none">
+      <label class="etiquette">Raison personnalisee</label>
+      <textarea id="supp-raison-perso" rows="3" placeholder="Precisez la raison..."></textarea>
+    </div>
+    <div id="msg-supp" style="font-size:13px;font-weight:700;text-align:center;margin-bottom:12px;display:none"></div>
+    <div class="duo">
+      <button class="btn btn-rouge" onclick="confirmerSuppression()">Confirmer la suppression</button>
+      <button class="btn btn-gris" onclick="fermerModal('m-suppression')">Annuler</button>
+    </div>
   </div>
 </div>
 
@@ -712,8 +787,12 @@ var reponses      = {};
 var timerInt      = null;
 var tempsRestant  = 0;
 var ongletAdmin   = 'ALL';
-var heureConnexion = null;
-var heureDebut    = null;
+var heureConnexion    = null;
+var heureDebut        = null;
+var monParticipantKey = null;  /* Cle Firebase de l'entree participant */
+var participantsData  = [];    /* Liste admin des participants */
+var _supprimerKey     = null;  /* Pour la modal de suppression */
+var _supprimerData    = null;
 
 /* ================================================================
    GESTION VERSION DE SESSION
@@ -753,6 +832,10 @@ function getDevId() {
     localStorage.setItem('sec4_dev', d);
   }
   return d;
+}
+
+function genELVId() {
+  return 'ELV-' + String(Math.floor(10000 + Math.random() * 90000));
 }
 
 /* ================================================================
@@ -903,7 +986,7 @@ function demarrerFlux() {
   var dev = getDevId();
 
   /* Source de verite : Firebase d'abord, localStorage ensuite */
-  var dansFirebase = resultats.find(function(x) { return x.deviceId === dev; });
+  var dansFirebase = resultats.find(function(x) { return x.deviceId === dev && !x.supprime; });
   var dansLocal    = localStorage.getItem('sec4_done_' + dev);
 
   if (dansFirebase && dansLocal) {
@@ -953,15 +1036,37 @@ function validerFormulaire() {
     metier: document.getElementById('f-metier').value,
     mention:document.getElementById('f-mention').value,
     uid:    genUID(serie),
+    elvId:  genELVId(),
     deviceId: getDevId(),
     date:   new Date().toLocaleString('fr-FR'),
     heureConnexion: new Date().toISOString()
   };
   reponses = {};
+  monParticipantKey = null;
   document.getElementById('serie-chip').textContent = 'Serie ' + serie;
   afficherQCM();
   aller('p-qcm');
   lancerChrono();
+  /* ── Enregistrement immediat du participant dans Firebase ── */
+  var _ep = {
+    elvId:          utilisateur.elvId,
+    nom:            utilisateur.nom,
+    serie:          utilisateur.serie,
+    ecole:          utilisateur.ecole,
+    statut:         'En cours',
+    heureConnexion: utilisateur.heureConnexion,
+    deviceId:       utilisateur.deviceId
+  };
+  db.ref('sec4/participants').push(_ep).then(function(ref) {
+    monParticipantKey = ref.key;
+    db.ref('sec4/participants/' + monParticipantKey).onDisconnect().update({
+      statut: 'Deconnecte',
+      heureDeconnexion: new Date().toISOString()
+    });
+    lancerEcouteSuppression();
+  }).catch(function(err) {
+    console.warn('Enregistrement participant echoue (non bloquant) :', err.message);
+  });
 }
 
 function questionsDemo() {
@@ -1077,6 +1182,10 @@ function afficherChrono() {
    ================================================================ */
 function soumissionAuto() {
   document.getElementById('m-temps').classList.add('ouvert');
+  var _ecranA = document.getElementById('ecran-chargement');
+  var _txtA   = document.getElementById('charg-txt');
+  if (_txtA)   _txtA.textContent = 'Temps ecoule — enregistrement de votre devoir en cours...';
+  if (_ecranA) _ecranA.style.display = 'flex';
   calculerEtAfficher();
 }
 
@@ -1092,6 +1201,10 @@ function tenterSoumission() {
 
 function soumettreFinal() {
   fermerModal('m-confirmer');
+  var _ecran = document.getElementById('ecran-chargement');
+  var _txt   = document.getElementById('charg-txt');
+  if (_txt)   _txt.textContent = 'Enregistrement de votre devoir en cours...';
+  if (_ecran) _ecran.style.display = 'flex';
   calculerEtAfficher();
 }
 
@@ -1116,29 +1229,81 @@ function calculerEtAfficher() {
   pts20 = Math.round(pts20 * 10) / 10;
 
   var entree = {
-    nom:          utilisateur.nom,
-    serie:        utilisateur.serie,
-    ecole:        utilisateur.ecole,
-    metier:       utilisateur.metier,
-    mention:      utilisateur.mention,
-    uid:          utilisateur.uid,
-    deviceId:     utilisateur.deviceId,
-    date:         new Date().toLocaleString('fr-FR'),
+    nom:            utilisateur.nom,
+    serie:          utilisateur.serie,
+    ecole:          utilisateur.ecole,
+    metier:         utilisateur.metier,
+    mention:        utilisateur.mention,
+    uid:            utilisateur.uid,
+    elvId:          utilisateur.elvId || '',
+    deviceId:       utilisateur.deviceId,
+    date:           new Date().toLocaleString('fr-FR'),
     heureConnexion: utilisateur.heureConnexion,
-    heureDebut:   heureDebut || heureFin,
-    heureFin:     heureFin,
-    duree_sec:    duree_sec,
-    duree_fmt:    duree_fmt,
-    totalTrouve:  totalTrouve,
-    totalPoss:    totalPoss,
-    totalFaux:    totalFaux,
-    pts20:        pts20
+    heureDebut:     heureDebut || heureFin,
+    heureFin:       heureFin,
+    duree_sec:      duree_sec,
+    duree_fmt:      duree_fmt,
+    totalTrouve:    totalTrouve,
+    totalPoss:      totalPoss,
+    totalFaux:      totalFaux,
+    pts20:          pts20,
+    supprime:       false
   };
 
-  sauvegarder(entree);
-  localStorage.setItem('sec4_done_' + utilisateur.deviceId, '1');
+  /* ── Sauvegarde Firebase avec confirmation et 3 tentatives ── */
+  var _ecran = document.getElementById('ecran-chargement');
+  var _txt   = document.getElementById('charg-txt');
+  /* Activer l'ecran si pas deja visible (ex: soumission automatique) */
+  if (_ecran && _ecran.style.display !== 'flex') {
+    if (_txt) _txt.textContent = 'Enregistrement de votre devoir en cours...';
+    _ecran.style.display = 'flex';
+  }
+  var _tentatives = 0;
 
-  document.getElementById('res-id').textContent   = utilisateur.uid;
+  function _tenterEnregistrement() {
+    _tentatives++;
+    if (_txt) _txt.textContent = 'Enregistrement en cours (tentative ' + _tentatives + '/3)...';
+
+    var refRes = db.ref('sec4/resultats').push();
+
+    /* Double verification : ecriture + lecture de confirmation */
+    refRes.set(entree)
+      .then(function() { return refRes.once('value'); })
+      .then(function(snap) {
+        if (!snap.exists()) throw new Error('Confirmation Firebase echouee');
+        var confirmedData = snap.val();
+        if (confirmedData.uid !== utilisateur.uid) throw new Error('Incoherence donnees');
+
+        /* Succes — annuler le onDisconnect et mettre a jour le statut */
+        if (monParticipantKey) {
+          db.ref('sec4/participants/' + monParticipantKey).onDisconnect().cancel();
+          db.ref('sec4/participants/' + monParticipantKey).update({
+            statut: 'Soumis',
+            heureSoumission: heureFin,
+            uid: utilisateur.uid,
+            resultKey: refRes.key
+          }).catch(function(){});
+        }
+        localStorage.setItem('sec4_done_' + utilisateur.deviceId, '1');
+        if (_ecran) _ecran.style.display = 'none';
+        afficherPageResultat(entree, totalTrouve, totalPoss, totalFaux, pts20, true);
+      })
+      .catch(function(err) {
+        if (_tentatives < 3) {
+          if (_txt) _txt.textContent = 'Nouvelle tentative dans 3 secondes... (' + err.message + ')';
+          setTimeout(_tenterEnregistrement, 3000);
+        } else {
+          /* Echec apres 3 tentatives */
+          if (_ecran) _ecran.style.display = 'none';
+          afficherPageResultat(entree, totalTrouve, totalPoss, totalFaux, pts20, false);
+        }
+      });
+  }
+  _tenterEnregistrement();
+}
+
+function afficherPageResultat(entree, totalTrouve, totalPoss, totalFaux, pts20, confirme) {
+  document.getElementById('res-id').textContent   = entree.uid;
   document.getElementById('res-brut').textContent = totalTrouve + '/' + totalPoss;
   document.getElementById('res-pts').textContent  = pts20.toFixed(1) + ' / 20 pts';
 
@@ -1146,13 +1311,31 @@ function calculerEtAfficher() {
   if (pts20 >= 20)      { mc = 'Perfection !'; mm = 'Score parfait absolu ! 20/20. Une performance rarissime. Bravo !'; mCls = 'm-vert'; }
   else if (pts20 >= 18) { mc = 'Excellent';    mm = 'Performance remarquable ! Vous etes parmi les meilleurs. Le Bac est dans votre poche !'; mCls = 'm-vert'; }
   else if (pts20 >= 16) { mc = 'Tres Bien';    mm = 'Performance exceptionnelle ! Vous etes pret(e) pour le Bac. Continuez sur cette lancee !'; mCls = 'm-vert'; }
-  else if (pts20 >= 14) { mc = 'Bien';         mm = 'Tres bon resultat ! Quelques revisions supplementaires vous meneront a l\'excellence.'; mCls = 'm-bleu'; }
+  else if (pts20 >= 14) { mc = 'Bien';         mm = "Tres bon resultat ! Quelques revisions supplementaires vous meneront a l'excellence."; mCls = 'm-bleu'; }
   else if (pts20 >= 12) { mc = 'Assez Bien';   mm = 'Bon travail ! Continuez vos revisions pour atteindre la mention Bien au Bac.'; mCls = 'm-or'; }
   else if (pts20 >= 10) { mc = 'Passable';     mm = 'Bon courage ! Revoyez les chapitres cles et rejoignez nos cours de soutien S.E. Corporation.'; mCls = 'm-or'; }
   else                  { mc = 'A ameliorer';  mm = 'Ne vous decouragez pas ! Les classes preparatoires S.E. Corporation sont la pour vous aider.'; mCls = 'm-rouge'; }
 
   document.getElementById('res-mention').innerHTML = '<div class="mention ' + mCls + '">' + mc + '</div>';
   document.getElementById('res-message').textContent = mm;
+
+  /* Boite de confirmation ou d'avertissement */
+  var confBox  = document.getElementById('confirmation-box');
+  var warnBox  = document.getElementById('res-save-warning');
+  if (confirme) {
+    var now = new Date();
+    document.getElementById('conf-details').innerHTML =
+      '<strong style="color:#c8f0d0">Identifiant session :</strong> ' + (entree.elvId || '--') + '<br>' +
+      '<strong style="color:#c8f0d0">Nom :</strong> ' + entree.nom + '<br>' +
+      '<strong style="color:#c8f0d0">Date :</strong> ' + now.toLocaleDateString('fr-FR') + '<br>' +
+      '<strong style="color:#c8f0d0">Heure :</strong> ' + now.toLocaleTimeString('fr-FR') + '<br>' +
+      '<strong style="color:#c8f0d0">Code de confirmation :</strong> ' + entree.uid;
+    if (confBox) confBox.style.display = 'block';
+    if (warnBox) warnBox.style.display = 'none';
+  } else {
+    if (confBox) confBox.style.display = 'none';
+    if (warnBox) warnBox.style.display = 'block';
+  }
 
   if (msgFin && msgFin.trim()) {
     document.getElementById('msg-fin-contenu').textContent = msgFin;
@@ -1161,6 +1344,57 @@ function calculerEtAfficher() {
     document.getElementById('msg-fin-zone').style.display = 'none';
   }
   aller('p-resultat');
+}
+
+/* ================================================================
+   GESTION PARTICIPANTS : ECOUTE SUPPRESSION EN TEMPS REEL
+   ================================================================ */
+function lancerEcouteSuppression() {
+  if (!monParticipantKey) return;
+  db.ref('sec4/participants/' + monParticipantKey).on('value', function(snap) {
+    var data = snap.val();
+    if (!data) return;
+    if (data.statut && data.statut.indexOf('Supprime') === 0) {
+      clearInterval(timerInt);
+      var raison = data.raisonSuppression || 'Non precisee';
+      document.getElementById('overlay-supp-raison').textContent = 'Raison : ' + raison;
+      document.getElementById('overlay-supp').classList.add('visible');
+    }
+  });
+}
+
+function retenteApresSupp() {
+  /* Masquer l'overlay */
+  document.getElementById('overlay-supp').classList.remove('visible');
+  /* Detacher l'ecouteur de l'ancien participant */
+  if (monParticipantKey) {
+    db.ref('sec4/participants/' + monParticipantKey).off();
+    monParticipantKey = null;
+  }
+  /* Effacer le marqueur de soumission pour ce device */
+  try { localStorage.removeItem('sec4_done_' + getDevId()); } catch(e) {}
+  /* Reinitialiser l'etat de la session */
+  utilisateur = null;
+  questions   = [];
+  reponses    = {};
+  /* Vider le formulaire */
+  var fNom = document.getElementById('f-nom');
+  if (fNom) fNom.value = '';
+  /* Aller au formulaire */
+  aller('p-formulaire');
+}
+
+function quitterApresSupp() {
+  document.getElementById('overlay-supp').classList.remove('visible');
+  if (monParticipantKey) {
+    db.ref('sec4/participants/' + monParticipantKey).off();
+    monParticipantKey = null;
+  }
+  try { localStorage.removeItem('sec4_done_' + getDevId()); } catch(e) {}
+  utilisateur = null;
+  questions   = [];
+  reponses    = {};
+  aller('p-accueil');
 }
 
 /* ================================================================
@@ -1253,7 +1487,7 @@ function mnItem(label, val, cls) {
 }
 
 function afficherTop10() {
-  var tries = resultats.slice().sort(function(a, b) { return b.pts20 - a.pts20; }).slice(0, 10);
+  var tries = resultats.filter(function(r){return !r.supprime;}).slice().sort(function(a, b) { return b.pts20 - a.pts20; }).slice(0, 10);
   var el    = document.getElementById('top10');
   if (!tries.length) {
     el.innerHTML = '<div style="color:var(--discret);font-size:14px;padding:12px;text-align:center">Aucun resultat pour l\'instant.</div>';
@@ -1290,17 +1524,21 @@ function connexionAdmin() {
 }
 
 function afficherAdmin() {
-  var n = resultats.length;
+  var valides = resultats.filter(function(r){ return !r.supprime; });
+  var n = valides.length;
   document.getElementById('st-nb').textContent = n;
+  var pEl = document.getElementById('st-part');
+  if (pEl) pEl.textContent = participantsData.length;
   if (n) {
-    var moy = resultats.reduce(function(s, r) { return s + r.pts20; }, 0) / n;
-    var max = Math.max.apply(null, resultats.map(function(r) { return r.pts20; }));
+    var moy = valides.reduce(function(s, r) { return s + r.pts20; }, 0) / n;
+    var max = Math.max.apply(null, valides.map(function(r) { return r.pts20; }));
     document.getElementById('st-moy').textContent = moy.toFixed(1);
     document.getElementById('st-max').textContent = max.toFixed(1);
   } else {
     document.getElementById('st-moy').textContent = '-';
     document.getElementById('st-max').textContent = '-';
   }
+  afficherParticipants();
   if (planning.date)  document.getElementById('date-ep').value = planning.date;
   if (planning.debut) document.getElementById('h-debut').value = planning.debut;
   if (planning.fin)   document.getElementById('h-fin').value   = planning.fin;
@@ -1401,8 +1639,10 @@ function afficherTableau(serie) {
   vide.style.display = 'none';
   corps.innerHTML = tries.map(function(r) {
     var c = couleurPts(r.pts20);
-    return '<tr>'
-      + '<td class="code-style">' + r.uid + '</td>'
+    var suppBadge = r.supprime ? ' <span style="font-size:10px;background:var(--rouge);color:#fff;border-radius:4px;padding:2px 5px;vertical-align:middle">Supp.</span>' : '';
+    var rowStyle  = r.supprime ? ' style="opacity:.4"' : '';
+    return '<tr' + rowStyle + '>'
+      + '<td class="code-style">' + r.uid + suppBadge + '</td>'
       + '<td style="font-size:13px;max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + r.nom + '</td>'
       + '<td style="font-size:13px">' + r.serie + '</td>'
       + '<td style="font-size:18px;font-weight:900;color:' + c + '">' + r.pts20.toFixed(1) + '</td>'
@@ -1612,7 +1852,8 @@ function chargerDonnees() {
     db.ref('sec4/planning').once('value'),
     db.ref('sec4/resultats').once('value'),
     db.ref('sec4/annonce').once('value'),
-    db.ref('sec4/msgFin').once('value')
+    db.ref('sec4/msgFin').once('value'),
+    db.ref('sec4/participants').once('value')
   ]).then(function(snaps) {
     qcmData     = snaps[0].val() || {};
     planning    = snaps[1].val() || {date:'', debut:'', fin:''};
@@ -1620,6 +1861,8 @@ function chargerDonnees() {
     resultats   = res ? Object.values(res) : [];
     annonceData = snaps[3].val() || {active:false, titre:'', message:'', photo:''};
     msgFin      = snaps[4].val() || '';
+    var pts     = snaps[5].val();
+    participantsData = pts ? Object.keys(pts).map(function(k){ var o=pts[k]; o._key=k; return o; }) : [];
 
     /* Masquer l'ecran de chargement */
     document.getElementById('ecran-chargement').style.display = 'none';
@@ -1628,11 +1871,18 @@ function chargerDonnees() {
     afficherPopupAnnonce();
 
     /* Listeners temps reel */
-    db.ref('sec4/qcm').on('value',      function(s){ qcmData = s.val() || {}; });
-    db.ref('sec4/planning').on('value', function(s){ planning = s.val() || {date:'',debut:'',fin:''}; mettreAJourBanniere(); });
-    db.ref('sec4/resultats').on('value',function(s){ var v = s.val(); resultats = v ? Object.values(v) : []; afficherTop10(); });
-    db.ref('sec4/annonce').on('value',  function(s){ annonceData = s.val() || {active:false,titre:'',message:'',photo:''}; });
-    db.ref('sec4/msgFin').on('value',   function(s){ msgFin = s.val() || ''; });
+    db.ref('sec4/qcm').on('value',           function(s){ qcmData = s.val() || {}; });
+    db.ref('sec4/planning').on('value',       function(s){ planning = s.val() || {date:'',debut:'',fin:''}; mettreAJourBanniere(); });
+    db.ref('sec4/resultats').on('value',      function(s){ var v = s.val(); resultats = v ? Object.values(v) : []; afficherTop10(); });
+    db.ref('sec4/annonce').on('value',        function(s){ annonceData = s.val() || {active:false,titre:'',message:'',photo:''}; });
+    db.ref('sec4/msgFin').on('value',         function(s){ msgFin = s.val() || ''; });
+    db.ref('sec4/participants').on('value',   function(s){
+      var v = s.val();
+      participantsData = v ? Object.keys(v).map(function(k){ var o=v[k]; o._key=k; return o; }) : [];
+      afficherParticipants();
+      var pEl = document.getElementById('st-part');
+      if (pEl) pEl.textContent = participantsData.length;
+    });
 
   }).catch(function(err) {
     console.error('Firebase erreur donnees :', err);
@@ -1689,6 +1939,106 @@ function initialiserFirebase() {
     /* Erreur reseau lors de la verification de version : continuer quand meme */
     console.warn('Erreur lecture version, chargement sans verification :', err);
     chargerDonnees();
+  });
+}
+
+/* ================================================================
+   ADMIN : PARTICIPANTS ET SUPPRESSION
+   ================================================================ */
+function afficherParticipants() {
+  var el  = document.getElementById('liste-participants');
+  var nb  = document.getElementById('nb-participants');
+  if (!el) return;
+  var list = participantsData.slice().sort(function(a, b) {
+    return (b.heureConnexion || '') > (a.heureConnexion || '') ? 1 : -1;
+  });
+  if (!list.length) {
+    if (nb) nb.textContent = 'Aucun participant pour l\'instant.';
+    el.innerHTML = '';
+    return;
+  }
+  if (nb) nb.textContent = list.length + ' participant(s) enregistre(s)';
+  el.innerHTML = list.map(function(p) {
+    var heure  = p.heureConnexion ? new Date(p.heureConnexion).toLocaleTimeString('fr-FR') : '--';
+    var statut = p.statut || 'En cours';
+    var sCls   = statut === 'Soumis' ? 'pc-soumis'
+               : statut.indexOf('Supprime') === 0 ? 'pc-supprime'
+               : statut === 'Deconnecte' ? 'pc-deconnecte'
+               : 'pc-en-cours';
+    var suppBtnDisabled = statut.indexOf('Supprime') === 0 ? ' disabled style="opacity:.4"' : '';
+    var raisonLine = (p.raisonSuppression)
+      ? '<div style="font-size:12px;color:var(--rouge);margin-top:4px">Raison : ' + p.raisonSuppression + '</div>'
+      : '';
+    return '<div class="participant-carte">'
+      + '<div class="pc-header">'
+      +   '<div><div class="pc-nom">' + p.nom + '</div>'
+      +   '<div class="pc-elv">ID : ' + (p.elvId || '--') + (p.uid ? ' | Code : ' + p.uid : '') + '</div></div>'
+      +   '<span class="pc-statut ' + sCls + '">' + statut + '</span>'
+      + '</div>'
+      + '<div class="pc-infos">'
+      +   'Serie : ' + (p.serie || '--') + ' &nbsp;|&nbsp; '
+      +   'Ecole : ' + (p.ecole || '--') + ' &nbsp;|&nbsp; '
+      +   'Connexion : ' + heure
+      + raisonLine
+      + '</div>'
+      + '<div class="pc-actions">'
+      +   '<button class="btn btn-rouge btn-petit"' + suppBtnDisabled + ' onclick="ouvrirModalSuppression(\'' + p._key + '\')">Supprimer le devoir</button>'
+      + '</div>'
+      + '</div>';
+  }).join('');
+}
+
+function ouvrirModalSuppression(key) {
+  _supprimerKey  = key;
+  _supprimerData = participantsData.find(function(p){ return p._key === key; });
+  if (!_supprimerData) return;
+  var info = _supprimerData.nom + ' (' + (_supprimerData.elvId || '--') + ')';
+  if (_supprimerData.ecole) info += ' — ' + _supprimerData.ecole;
+  document.getElementById('m-supp-info').textContent = info;
+  document.getElementById('supp-raison-select').value = '';
+  document.getElementById('supp-raison-perso').value  = '';
+  document.getElementById('champ-raison-perso').style.display = 'none';
+  document.getElementById('msg-supp').style.display   = 'none';
+  document.getElementById('m-suppression').classList.add('ouvert');
+}
+
+function majChampsSupp() {
+  var val = document.getElementById('supp-raison-select').value;
+  document.getElementById('champ-raison-perso').style.display = val === 'autre' ? 'block' : 'none';
+}
+
+function confirmerSuppression() {
+  var select = document.getElementById('supp-raison-select').value;
+  var raison = select === 'autre'
+    ? (document.getElementById('supp-raison-perso').value.trim())
+    : select;
+  if (!raison) {
+    alert('Veuillez choisir ou saisir une raison de suppression.');
+    return;
+  }
+  if (!_supprimerKey) return;
+  var msgSupp = document.getElementById('msg-supp');
+  if (msgSupp) { msgSupp.style.display = 'block'; msgSupp.innerHTML = '<span style="color:var(--or)">Suppression en cours...</span>'; }
+
+  var maintenant = new Date().toISOString();
+  db.ref('sec4/participants/' + _supprimerKey).update({
+    statut: 'Supprime par administrateur',
+    raisonSuppression: raison,
+    dateSuppression: maintenant
+  }).then(function() {
+    /* Soft-delete du resultat si disponible */
+    if (_supprimerData && _supprimerData.resultKey) {
+      db.ref('sec4/resultats/' + _supprimerData.resultKey).update({
+        supprime: true,
+        raisonSuppression: raison,
+        dateSuppression: maintenant
+      }).catch(function(){});
+    }
+    fermerModal('m-suppression');
+    _supprimerKey  = null;
+    _supprimerData = null;
+  }).catch(function(err) {
+    if (msgSupp) msgSupp.innerHTML = '<span style="color:var(--rouge)">Erreur : ' + err.message + '</span>';
   });
 }
 
