@@ -276,7 +276,8 @@ textarea{display:block;width:100%;background:var(--carte2);border:1.5px solid va
 .overlay-supp.visible{display:flex}
 .overlay-supp-badge{background:var(--rouge);color:#fff;border-radius:10px;padding:8px 20px;font-size:13px;font-weight:900;text-transform:uppercase;letter-spacing:1px;margin-bottom:18px}
 .overlay-supp-titre{font-size:22px;font-weight:900;color:#fff;margin-bottom:14px;max-width:380px;line-height:1.4}
-.overlay-supp-raison{background:var(--carte);border:1.5px solid rgba(224,53,53,.4);border-radius:12px;padding:16px;font-size:15px;color:#d0c8c8;line-height:1.7;margin-bottom:20px;max-width:380px;width:100%}
+.overlay-supp-raison{background:rgba(224,53,53,.12);border:2px solid var(--rouge);border-radius:12px;padding:16px;font-size:15px;color:#fff;line-height:1.7;margin-bottom:20px;max-width:380px;width:100%;text-align:left}
+.overlay-supp-motif{display:block;font-size:12px;font-weight:900;text-transform:uppercase;letter-spacing:1px;color:var(--rouge);margin-bottom:6px}
 /* ──── PARTICIPANTS ADMIN ──── */
 .participant-carte{background:var(--carte2);border:1px solid var(--ligne);border-radius:12px;padding:14px;margin-bottom:10px}
 .pc-header{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:8px;flex-wrap:wrap}
@@ -321,7 +322,7 @@ textarea{display:block;width:100%;background:var(--carte2);border:1.5px solid va
 <div class="overlay-supp" id="overlay-supp">
   <div class="overlay-supp-badge">Devoir supprime</div>
   <div class="overlay-supp-titre">L'administrateur a supprime votre devoir.</div>
-  <div class="overlay-supp-raison" id="overlay-supp-raison">Raison : --</div>
+  <div class="overlay-supp-raison" id="overlay-supp-raison"><span class="overlay-supp-motif">MOTIF</span>--</div>
   <p style="font-size:14px;color:var(--discret);max-width:340px;line-height:1.8;margin-bottom:20px;text-align:center">Vous pouvez retenter de participer en remplissant a nouveau le formulaire.</p>
   <div style="display:flex;flex-direction:column;gap:12px;width:100%;max-width:320px;margin-bottom:20px">
     <button class="btn btn-bleu" onclick="retenteApresSupp()">Retenter de participer</button>
@@ -1357,7 +1358,7 @@ function lancerEcouteSuppression() {
     if (data.statut && data.statut.indexOf('Supprime') === 0) {
       clearInterval(timerInt);
       var raison = data.raisonSuppression || 'Non precisee';
-      document.getElementById('overlay-supp-raison').textContent = 'Raison : ' + raison;
+      document.getElementById('overlay-supp-raison').innerHTML = '<span class="overlay-supp-motif">MOTIF</span>' + raison;
       document.getElementById('overlay-supp').classList.add('visible');
     }
   });
@@ -1744,9 +1745,11 @@ function reinitTentatives() {
 }
 
 function effacerResultats() {
-  if (confirm('Effacer TOUS les resultats ? Irreversible !')) {
+  if (confirm('Effacer TOUS les resultats ET la liste des participants ? Irreversible !')) {
     db.ref('sec4/resultats').remove();
-    resultats = [];
+    db.ref('sec4/participants').remove();
+    resultats        = [];
+    participantsData = [];
     afficherAdmin();
   }
 }
